@@ -27,7 +27,6 @@ export function ShopBrowser({ products, categories }: { products: Product[]; cat
 
   const cat = params.get("kategorija") ?? "";
   const sort = (params.get("sort") ?? "preporuceno") as Sort;
-  const onlyStock = params.get("na-stanju") === "1";
   const [q, setQ] = useState(params.get("q") ?? "");
   const dq = useDeferredValue(q);
 
@@ -52,7 +51,6 @@ export function ShopBrowser({ products, categories }: { products: Product[]; cat
     const r = products.filter(
       (p) =>
         (!activeCat || p.category_id === activeCat.id) &&
-        (!onlyStock || p.variants.some((v) => v.stock > 0)) &&
         (!needle || norm(`${p.name} ${p.tagline ?? ""} ${p.description ?? ""}`).includes(needle)),
     );
     const by: Record<Sort, (a: Product, b: Product) => number> = {
@@ -63,7 +61,7 @@ export function ShopBrowser({ products, categories }: { products: Product[]; cat
       "naziv-za": (a, b) => b.name.localeCompare(a.name, "sr"),
     };
     return r.sort(by[sort] ?? by.preporuceno);
-  }, [products, categories, cat, dq, sort, onlyStock]);
+  }, [products, categories, cat, dq, sort]);
 
   const catName = (id: string | null) => categories.find((c) => c.id === id)?.name;
 
@@ -135,10 +133,6 @@ export function ShopBrowser({ products, categories }: { products: Product[]; cat
         <p className="text-ink-soft" aria-live="polite">
           {list.length} {list.length % 10 === 1 && list.length % 100 !== 11 ? "proizvod" : "proizvoda"}
         </p>
-        <label className="flex cursor-pointer items-center gap-2 font-semibold">
-          <input type="checkbox" checked={onlyStock} onChange={(e) => update({ "na-stanju": e.target.checked ? "1" : null })} className="h-4 w-4 accent-ink" />
-          Samo na stanju
-        </label>
       </div>
 
       {list.length === 0 ? (

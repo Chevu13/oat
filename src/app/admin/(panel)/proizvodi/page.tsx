@@ -20,12 +20,11 @@ export default async function ProductsAdmin() {
           + Novi proizvod
         </Link>
       </div>
-      <p className="mt-2 text-sm text-ink-soft">Kliknite na proizvod da izmenite naziv, cenu, slike, stanje ili varijante. Izmene su odmah vidljive u prodavnici.</p>
+      <p className="mt-2 text-sm text-ink-soft">Kliknite na proizvod da izmenite naziv, cenu, slike ili varijante. Izmene su odmah vidljive u prodavnici.</p>
 
       <ul className="mt-6 space-y-2">
         {products.map((p) => {
           const prices = p.variants.map(effectivePrice);
-          const stock = p.variants.reduce((s, v) => s + v.stock, 0);
           const sale = p.variants.some((v) => v.sale_price != null);
           return (
             <li key={p.id} className={`flex flex-wrap items-center gap-4 rounded-2xl bg-white p-3 ring-1 ring-line md:flex-nowrap md:p-4 ${p.is_active ? "" : "opacity-60"}`}>
@@ -49,10 +48,6 @@ export default async function ProductsAdmin() {
                   {Math.min(...prices) === Math.max(...prices) ? formatRSD(prices[0]) : `${formatRSD(Math.min(...prices))}+`}
                 </p>
                 {sale && <p className="text-xs font-semibold text-berry">Akcija</p>}
-              </div>
-              <div className="w-24 text-right text-sm">
-                <p className={`font-semibold ${stock === 0 ? "text-berry" : stock <= 5 ? "text-amber-700" : ""}`}>{stock} kom</p>
-                <p className="text-xs text-ink-soft">na stanju</p>
               </div>
               <ProductRowActions id={p.id} name={p.name} active={p.is_active} featured={p.is_featured} />
             </li>

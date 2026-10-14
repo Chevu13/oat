@@ -165,7 +165,7 @@ export function CartDrawer() {
                   <Link href="/placanje" onClick={() => setOpen(false)} className="btn btn-ink mt-4 w-full">
                     Nastavi na plaćanje <ArrowIcon />
                   </Link>
-                  <p className="mt-2 text-center text-xs text-ink-soft">Plaćanje pouzećem · konačna cena se proverava pri porudžbini</p>
+                  <p className="mt-2 text-center text-xs text-ink-soft">Pouzećem ili pri preuzimanju · cena se proverava pri porudžbini</p>
                 </div>
               </>
             )}

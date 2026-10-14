@@ -17,10 +17,10 @@ seedProducts.forEach((p, i) => {
           ${arr(p.images)}, ${q(p.accent)}, ${arr(DEMO_MISSING)}, ${Boolean(p.featured)}, ${i})
   on conflict (slug) do nothing returning id
 )
-insert into public.product_variants (product_id, name, price, sale_price, stock, sort)
-select prod.id, v.name, v.price, v.sale_price, v.stock, v.sort from prod, (values
-${p.variants.map((v, j) => `  (${q(v.name)}, ${v.price}, ${v.sale_price ?? "null::int"}, ${v.stock}, ${j})`).join(",\n")}
-) as v(name, price, sale_price, stock, sort);\n\n`;
+insert into public.product_variants (product_id, name, price, sale_price, sort)
+select prod.id, v.name, v.price, v.sale_price, v.sort from prod, (values
+${p.variants.map((v, j) => `  (${q(v.name)}, ${v.price}, ${v.sale_price ?? "null::int"}, ${j})`).join(",\n")}
+) as v(name, price, sale_price, sort);\n\n`;
 });
 writeFileSync("supabase/seed.sql", sql);
 console.log("wrote supabase/seed.sql");

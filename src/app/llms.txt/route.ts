@@ -10,7 +10,7 @@ export async function GET() {
     "",
     `> ${site.description}`,
     "",
-    "OAT BOMB pravi slojevite proteinske ovsene kaše u čaši. Plaćanje pouzećem. Mini kaše za događaje i saradnja sa objektima (kafići, teretane, prodavnice).",
+    "OAT BOMB pravi slojevite proteinske ovsene kaše u čaši. Dostava uz plaćanje pouzećem ili lično preuzimanje u radnji. Mini kaše za događaje i saradnja sa objektima (kafići, teretane, prodavnice).",
     "",
     `- Telefon: ${site.phone}`,
     `- Instagram: ${site.instagram}`,

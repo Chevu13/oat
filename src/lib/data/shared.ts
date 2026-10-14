@@ -1,9 +1,7 @@
-import type { DashboardStats, Order, OrderFilter, Product } from "@/lib/types";
-
-export const LOW_STOCK = 5;
+import type { DashboardStats, Order, OrderFilter } from "@/lib/types";
 
 // ponytail: aggregates in JS over all orders; move to SQL views once order volume is in the tens of thousands.
-export function computeDashboard(orders: Order[], products: Product[]): DashboardStats {
+export function computeDashboard(orders: Order[]): DashboardStats {
   const live = orders.filter((o) => o.status !== "otkazana");
   const sales = new Map<string, { product_name: string; quantity: number; revenue: number }>();
   for (const o of live)
@@ -20,17 +18,6 @@ export function computeDashboard(orders: Order[], products: Product[]): Dashboar
     totalValue: live.reduce((s, o) => s + o.total, 0),
     recentOrders: [...orders].sort((a, b) => b.created_at.localeCompare(a.created_at)).slice(0, 6),
     bestsellers: [...sales.values()].sort((a, b) => b.quantity - a.quantity).slice(0, 5),
-    lowStock: products
-      .flatMap((p) =>
-        p.variants.map((v) => ({
-          product_id: p.id,
-          product_name: p.name,
-          variant_name: v.name,
-          stock: v.stock,
-        })),
-      )
-      .filter((x) => x.stock <= LOW_STOCK)
-      .sort((a, b) => a.stock - b.stock),
   };
 }
 

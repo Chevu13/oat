@@ -7,10 +7,13 @@ import { useEffect, useState, useTransition } from "react";
 import { useCart } from "@/components/cart/cart-context";
 import { ArrowIcon, CheckIcon } from "@/components/ui/icons";
 import { formatRSD } from "@/lib/format";
-import { customerSchema, fieldErrors, type FieldErrors } from "@/lib/validation";
+import { customerSchema, fieldErrors, fieldRules, type FieldErrors } from "@/lib/validation";
+import { DELIVERY_FEE, FREE_DELIVERY_FROM, site } from "@/lib/config";
+import type { DeliveryMethod } from "@/lib/types";
 import { placeOrder, quoteCart, type Quote } from "@/app/(shop)/placanje/actions";
 
 type Field = keyof FieldErrors;
+const ADDRESS: Field[] = ["street", "city", "postal_code"];
 const FIELDS: { name: Field; label: string; type?: string; autoComplete: string; inputMode?: "tel" | "numeric" | "email"; half?: boolean; placeholder?: string }[] = [
   { name: "customer_name", label: "Ime i prezime", autoComplete: "name", placeholder: "Marko Marković" },
   { name: "email", label: "E-mail", type: "email", autoComplete: "email", inputMode: "email", half: true, placeholder: "ime@primer.rs" },
@@ -23,7 +26,8 @@ const FIELDS: { name: Field; label: string; type?: string; autoComplete: string;
 export function CheckoutForm() {
   const { lines, ready, clear, remove, setOpen } = useCart();
   const router = useRouter();
-  const [values, setValues] = useState<Record<string, string>>({ customer_name: "", email: "", phone: "", street: "", city: "", postal_code: "", note: "", payment_method: "pouzece", website: "" });
+  const [method, setMethod] = useState<DeliveryMethod>("dostava");
+  const [values, setValues] = useState<Record<string, string>>({ customer_name: "", email: "", phone: "", street: "", city: "", postal_code: "", note: "", website: "" });
   const [errors, setErrors] = useState<FieldErrors>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [accepted, setAccepted] = useState(false);
@@ -36,29 +40,24 @@ export function CheckoutForm() {
 
   // Re-price the cart on the server whenever it changes.
   useEffect(() => {
-    if (!ready || !items.length) return;
+    if (!ready || itemsKey === "[]") return;
     let live = true;
-    quoteCart(JSON.parse(itemsKey)).then((q) => {
-      if (!live) return;
-      setQuote(q);
-      // Drop lines for products that no longer exist.
-      for (const it of JSON.parse(itemsKey) as { variant_id: string }[]) if (!q.lines.some((l) => l.variant_id === it.variant_id)) remove(it.variant_id);
-    });
+    quoteCart(JSON.parse(itemsKey), method).then((q) => live && setQuote(q));
     return () => {
       live = false;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- itemsKey captures items
-  }, [itemsKey, ready, remove]);
+  }, [itemsKey, ready, method]);
 
   const validateField = (name: Field, value: string) => {
-    const r = customerSchema.shape[name].safeParse(value);
+    const r = fieldRules[name].safeParse(value);
     setErrors((e) => ({ ...e, [name]: r.success ? undefined : r.error.issues[0]?.message }));
   };
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     setFormError(null);
-    const parsed = customerSchema.safeParse(values);
+    const payload = { ...values, delivery_method: method };
+    const parsed = customerSchema.safeParse(payload);
     if (!parsed.success) {
       const fe = fieldErrors(parsed.error);
       setErrors(fe);
@@ -67,7 +66,7 @@ export function CheckoutForm() {
     }
     if (!accepted) return setFormError("Potrebno je da prihvatite uslove korišćenja.");
     start(async () => {
-      const res = await placeOrder(values, items);
+      const res = await placeOrder(payload, items);
       if (res.ok) {
         setPlaced(true);
         clear();
@@ -75,7 +74,7 @@ export function CheckoutForm() {
       } else {
         setFormError(res.error);
         if (res.fields) setErrors(res.fields);
-        quoteCart(items).then(setQuote);
+        quoteCart(items, method).then(setQuote);
       }
     });
   };
@@ -101,10 +100,32 @@ export function CheckoutForm() {
       <div className="space-y-10">
         <fieldset>
           <legend className="display mb-5 flex items-center gap-3 text-2xl md:text-3xl">
-            <Step n={1} /> Podaci za dostavu
+            <Step n={1} /> Preuzimanje
+          </legend>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {(
+              [
+                ["dostava", "Dostava na adresu", `Plaćanje pouzećem, gotovinom kuriru. Dostava ${formatRSD(DELIVERY_FEE)}, besplatna preko ${formatRSD(FREE_DELIVERY_FROM)}.`],
+                ["preuzimanje", "Lično preuzimanje", `Preuzmi u radnji i plati na licu mesta, bez troškova dostave. ${site.pickup}.`],
+              ] as const
+            ).map(([value, title, desc]) => (
+              <label key={value} className={`flex items-start gap-4 rounded-2xl border-2 bg-white/70 p-5 transition-colors ${method === value ? "border-ink" : "border-line hover:border-ink/40"}`}>
+                <input type="radio" name="delivery_method" value={value} checked={method === value} onChange={() => setMethod(value)} className="mt-1 h-5 w-5 shrink-0 accent-ink" />
+                <span>
+                  <span className="block font-bold">{title}</span>
+                  <span className="mt-1 block text-sm text-ink-soft">{desc}</span>
+                </span>
+              </label>
+            ))}
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend className="display mb-5 flex items-center gap-3 text-2xl md:text-3xl">
+            <Step n={2} /> {method === "dostava" ? "Podaci za dostavu" : "Vaši podaci"}
           </legend>
           <div className="grid gap-4 sm:grid-cols-2">
-            {FIELDS.map((f) => (
+            {FIELDS.filter((f) => method === "dostava" || !ADDRESS.includes(f.name)).map((f) => (
               <label key={f.name} className={f.half ? "" : "sm:col-span-2"}>
                 <span className="mb-1.5 block text-sm font-semibold">
                   {f.label} <span className="text-berry">*</span>
@@ -134,12 +155,12 @@ export function CheckoutForm() {
               </label>
             ))}
             <label className="sm:col-span-2">
-              <span className="mb-1.5 block text-sm font-semibold">Napomena za dostavu</span>
+              <span className="mb-1.5 block text-sm font-semibold">Napomena</span>
               <textarea
                 name="note"
                 rows={3}
                 maxLength={1000}
-                placeholder="Sprat, interfon, vreme kada ste kod kuće…"
+                placeholder={method === "dostava" ? "Sprat, interfon, vreme kada ste kod kuće…" : "Okvirno vreme kada dolazite po porudžbinu…"}
                 value={values.note}
                 onChange={(e) => setValues((v) => ({ ...v, note: e.target.value }))}
                 className="field resize-y"
@@ -148,19 +169,6 @@ export function CheckoutForm() {
             {/* honeypot */}
             <input name="website" tabIndex={-1} autoComplete="off" aria-hidden className="hidden" value={values.website} onChange={(e) => setValues((v) => ({ ...v, website: e.target.value }))} />
           </div>
-        </fieldset>
-
-        <fieldset>
-          <legend className="display mb-5 flex items-center gap-3 text-2xl md:text-3xl">
-            <Step n={2} /> Plaćanje
-          </legend>
-          <label className="flex cursor-pointer items-start gap-4 rounded-2xl border-2 border-ink bg-white/70 p-5">
-            <input type="radio" name="payment_method" value="pouzece" checked readOnly className="mt-1 h-5 w-5 accent-ink" />
-            <span>
-              <span className="block font-bold">Plaćanje pouzećem</span>
-              <span className="mt-1 block text-sm text-ink-soft">Plaćate gotovinom kuriru prilikom preuzimanja. Bez kartica, bez rizika.</span>
-            </span>
-          </label>
         </fieldset>
       </div>
 
@@ -181,7 +189,14 @@ export function CheckoutForm() {
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-bold">{l.name}</p>
                     <p className="text-xs text-ink-soft">{l.variantName}</p>
-                    {q && !q.available && <p className="text-xs font-semibold text-berry">{q.stock === 0 ? "Rasprodato" : `Dostupno: ${q.stock} kom`}</p>}
+                    {q && !q.available && (
+                      <p className="text-xs font-semibold text-berry">
+                        Nije dostupno ·{" "}
+                        <button type="button" onClick={() => remove(l.variantId)} className="underline underline-offset-2">
+                          Ukloni
+                        </button>
+                      </p>
+                    )}
                   </div>
                   <p className="text-sm font-semibold tabular-nums">{q ? formatRSD(q.unit_price * q.quantity) : "…"}</p>
                 </li>
@@ -190,7 +205,7 @@ export function CheckoutForm() {
           </ul>
           <dl className="mt-4 space-y-2 border-t border-line pt-4 text-sm">
             <Row k="Međuzbir" v={quote ? formatRSD(quote.subtotal) : "…"} />
-            <Row k="Dostava" v={quote ? (quote.shipping === 0 ? "Besplatna" : formatRSD(quote.shipping)) : "…"} />
+            <Row k={method === "dostava" ? "Dostava" : "Preuzimanje"} v={quote ? (quote.shipping === 0 ? "Besplatno" : formatRSD(quote.shipping)) : "…"} />
             <div className="flex justify-between pt-2 text-xl font-extrabold">
               <dt>Ukupno</dt>
               <dd className="tabular-nums">{total != null ? formatRSD(total) : "…"}</dd>

@@ -7,17 +7,12 @@ import { PlusIcon } from "@/components/ui/icons";
 import { effectivePrice, formatRSD, onAccent } from "@/lib/format";
 import type { Product } from "@/lib/types";
 
-export const LOW_STOCK = 5;
-
 export function ProductCard({ product, categoryName, priority = false, sizes = "(min-width:1024px) 25vw, 50vw" }: { product: Product; categoryName?: string; priority?: boolean; sizes?: string }) {
   const { add } = useCart();
-  const available = product.variants.filter((v) => v.stock > 0);
-  const soldOut = available.length === 0;
   const single = product.variants.length === 1;
-  const v = available[0] ?? product.variants[0];
+  const v = product.variants[0];
   const price = Math.min(...product.variants.map(effectivePrice));
   const sale = product.variants.find((x) => x.sale_price != null);
-  const low = !soldOut && single && v.stock <= LOW_STOCK;
   const [img1, img2] = product.images;
 
   return (
@@ -31,7 +26,7 @@ export function ProductCard({ product, categoryName, priority = false, sizes = "
               fill
               sizes={sizes}
               priority={priority}
-              className={`object-cover transition-[transform,opacity] duration-700 ease-[var(--ease-out-expo)] group-hover:scale-[1.045] ${img2 ? "group-hover:opacity-0" : ""} ${soldOut ? "grayscale-[.6]" : ""}`}
+              className={`object-cover transition-[transform,opacity] duration-700 ease-[var(--ease-out-expo)] group-hover:scale-[1.045] ${img2 ? "group-hover:opacity-0" : ""}`}
             />
           )}
           {img2 && (
@@ -41,15 +36,12 @@ export function ProductCard({ product, categoryName, priority = false, sizes = "
           <span className="pointer-events-none absolute inset-x-0 bottom-0 h-1.5 origin-left transition-[height] duration-500 ease-[var(--ease-out-expo)] group-hover:h-3" style={{ background: product.accent }} />
 
           <div className="absolute left-3 top-3 flex flex-col items-start gap-1.5">
-            {sale && !soldOut && <span className="rounded-full bg-berry px-2.5 py-1 text-[0.68rem] font-bold uppercase tracking-wider text-white">Akcija</span>}
-            {soldOut && <span className="rounded-full bg-ink px-2.5 py-1 text-[0.68rem] font-bold uppercase tracking-wider text-paper">Rasprodato</span>}
-            {low && <span className="rounded-full bg-paper/90 px-2.5 py-1 text-[0.68rem] font-bold uppercase tracking-wider">Još {v.stock} kom</span>}
+            {sale && <span className="rounded-full bg-berry px-2.5 py-1 text-[0.68rem] font-bold uppercase tracking-wider text-white">Akcija</span>}
           </div>
         </div>
       </Link>
 
-      {!soldOut &&
-        (single ? (
+      {single ? (
           <button
             type="button"
             onClick={() =>
@@ -71,7 +63,7 @@ export function ProductCard({ product, categoryName, priority = false, sizes = "
           >
             Izaberi
           </Link>
-        ))}
+        )}
 
       <div className="mt-3 flex flex-col gap-1 px-0.5 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
         <div className="min-w-0">

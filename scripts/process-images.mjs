@@ -34,6 +34,13 @@ const jobs = [
   // ---- secondary angles ----
   { id: "642315774", out: "products/choco-raspberry-duo.jpg" },
   { id: "639953868", out: "products/nutella-tiramisu.jpg" },
+  // ---- bundles: square group shots → 4:5 by repeating the plain wall at the top (no cup cropped) ----
+  { id: "639953868", out: "bundles/slatka-kombinacija.jpg", crop: [200, 40, 1040, 1300] },
+  { id: "642315774", out: "bundles/choco-duo.jpg", crop: [180, 0, 1080, 1350] },
+  { id: "706003634", out: "bundles/cokoladni-trio.jpg", crop: [110, 0, 1220, 1300], extendTop: 225 },
+  { id: "719232558", out: "bundles/zdrava-kombinacija.jpg", crop: [60, 0, 1250, 1300], extendTop: 262 },
+  { id: "778870261", out: "bundles/omiljena-cetvorka.jpg", crop: [110, 0, 1220, 1360], extendTop: 165 },
+  { id: "712410497", out: "bundles/bomb-paket.jpg", crop: [100, 0, 1240, 1330], extendTop: 220 },
   // ---- lifestyle / editorial ----
   { id: "712410497", out: "lifestyle/lineup-five.jpg" },
   { id: "778870261", out: "lifestyle/lineup-four.jpg" },
@@ -66,6 +73,7 @@ for (const j of jobs) {
     const [left, top, width, height] = j.crop;
     img = img.extract({ left, top, width: Math.min(width, meta.width - left), height: Math.min(height, meta.height - top) });
   }
+  if (j.extendTop) img = sharp(await img.extend({ top: j.extendTop, extendWith: "copy" }).toBuffer());
   const file = path.join(OUT, j.out);
   fs.mkdirSync(path.dirname(file), { recursive: true });
   await img.resize({ width: 1400, withoutEnlargement: true }).jpeg({ quality: 86, mozjpeg: true }).toFile(file);

@@ -45,9 +45,9 @@ export function CategoryTiles({ categories, products }: { categories: Category[]
   return (
     <section className="mx-auto max-w-[1440px] px-4 py-20 md:px-8 md:py-28" aria-labelledby="kategorije">
       <SectionHead eyebrow="Kategorije" title={<span id="kategorije">Po raspoloženju</span>} link={{ href: "/prodavnica", label: "Sva ponuda" }} />
-      <div className="-mx-4 mt-10 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 [scrollbar-width:none] md:mx-0 md:grid md:grid-cols-5 md:overflow-visible md:px-0">
+      <div className="-mx-4 mt-10 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 [scrollbar-width:none] md:mx-0 md:grid md:grid-cols-3 md:overflow-visible md:px-0 lg:grid-cols-6">
         {tiles.map(({ c, items }, n) => (
-          <Reveal key={c.id} delay={n * 0.06} className="w-[62vw] shrink-0 snap-start sm:w-[40vw] md:w-auto">
+          <Reveal key={c.id} delay={n * 0.05} className="w-[62vw] shrink-0 snap-start sm:w-[40vw] md:w-auto">
             <Link href={`/prodavnica?kategorija=${c.slug}`} className="group relative block aspect-[3/4] overflow-hidden rounded-[1.4rem]">
               <Image
                 src={items[0].images[0]}
@@ -71,10 +71,22 @@ export function CategoryTiles({ categories, products }: { categories: Category[]
   );
 }
 
-export function ProductRow({ title, eyebrow, products, categories }: { title: string; eyebrow: string; products: Product[]; categories: Category[] }) {
+export function ProductRow({
+  title,
+  eyebrow,
+  products,
+  categories,
+  link = { href: "/prodavnica", label: "Pogledaj sve" },
+}: {
+  title: string;
+  eyebrow: string;
+  products: Product[];
+  categories: Category[];
+  link?: { href: string; label: string };
+}) {
   return (
     <section className="mx-auto max-w-[1440px] px-4 py-20 md:px-8 md:py-24">
-      <SectionHead eyebrow={eyebrow} title={title} link={{ href: "/prodavnica", label: "Pogledaj sve" }} />
+      <SectionHead eyebrow={eyebrow} title={title} link={link} />
       <ul className="mt-10 grid grid-cols-2 gap-x-3 gap-y-8 md:gap-x-5 lg:grid-cols-4">
         {products.map((p, n) => (
           <Reveal as="li" key={p.id} delay={(n % 4) * 0.07}>

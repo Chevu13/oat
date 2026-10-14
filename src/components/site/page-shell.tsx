@@ -1,4 +1,5 @@
 import { Breadcrumbs } from "./breadcrumbs";
+import { FitTitle } from "./fit-title";
 
 export function PageShell({ title, eyebrow, intro, href, children, wide = false }: { title: string; eyebrow?: string; intro?: React.ReactNode; href: string; children: React.ReactNode; wide?: boolean }) {
   return (
@@ -6,7 +7,7 @@ export function PageShell({ title, eyebrow, intro, href, children, wide = false 
       <Breadcrumbs items={[{ name: title, href }]} />
       <header className="mb-12 mt-6 md:mb-16">
         {eyebrow && <p className="eyebrow text-ink-soft">{eyebrow}</p>}
-        <h1 className="display mt-3 text-[9.6vw] sm:text-7xl md:text-8xl">{title}</h1>
+        <FitTitle text={title} max="6rem" maxWidth={wide ? 1440 : 1100} className="mt-3" />
         {intro && <div className="mt-6 max-w-2xl text-lg leading-relaxed text-ink-soft">{intro}</div>}
       </header>
       {children}

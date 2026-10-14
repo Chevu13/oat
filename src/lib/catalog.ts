@@ -32,6 +32,5 @@ export async function getBestsellers(limit = 4): Promise<Product[]> {
   return ranked.slice(0, limit);
 }
 
-export const inStock = (p: Product) => p.variants.some((v) => v.stock > 0);
 export const minPrice = (p: Product) => Math.min(...p.variants.map((v) => v.sale_price ?? v.price));
 export const onSale = (p: Product) => p.variants.some((v) => v.sale_price != null);

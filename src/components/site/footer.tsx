@@ -83,7 +83,7 @@ export async function Footer() {
 
         <div className="flex flex-col gap-2 border-t border-paper/15 py-6 text-xs text-paper/55 md:flex-row md:justify-between">
           <p>© {year} OAT BOMB. Sva prava zadržana.</p>
-          <p>Plaćanje pouzećem · Podaci o firmi: [čeka potvrdu klijenta]</p>
+          <p>Pouzećem ili preuzimanje u radnji · Podaci o firmi: [čeka potvrdu klijenta]</p>
         </div>
       </div>
     </footer>

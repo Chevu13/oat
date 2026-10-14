@@ -27,7 +27,7 @@ export default function TermsPage() {
           Cene su izražene u dinarima (RSD) <Placeholder>potvrditi PDV status</Placeholder>. Važeća je cena u trenutku slanja porudžbine.
         </p>
         <h2>Plaćanje i isporuka</h2>
-        <p>Plaćanje se vrši pouzećem, gotovinom kuriru. Uslovi dostave navedeni su na stranici Dostava.</p>
+        <p>Kod dostave na adresu plaćanje se vrši pouzećem, gotovinom kuriru. Kod ličnog preuzimanja plaća se u radnji prilikom preuzimanja. Uslovi su navedeni na stranici Dostava.</p>
         <h2>Reklamacije</h2>
         <p>
           Zbog prirode proizvoda (sveža hrana), eventualne reklamacije prijavite odmah po prijemu na {site.phone}.{" "}

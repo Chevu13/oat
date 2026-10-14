@@ -8,11 +8,11 @@ import { effectivePrice } from "@/lib/format";
 import { OrderError } from "@/lib/types";
 import { customerSchema, fieldErrors, itemsSchema, type FieldErrors } from "@/lib/validation";
 
-export type QuoteLine = { variant_id: string; name: string; variant: string; unit_price: number; quantity: number; stock: number; available: boolean };
+export type QuoteLine = { variant_id: string; name: string; variant: string; unit_price: number; quantity: number; available: boolean };
 export type Quote = { lines: QuoteLine[]; subtotal: number; shipping: number; total: number; issues: string[] };
 
 /** Authoritative cart pricing from the database, shown on the checkout page before submitting. */
-export async function quoteCart(raw: unknown): Promise<Quote> {
+export async function quoteCart(raw: unknown, method: unknown = "dostava"): Promise<Quote> {
   const parsed = itemsSchema.safeParse(raw);
   if (!parsed.success) return { lines: [], subtotal: 0, shipping: 0, total: 0, issues: [] };
   const products = await store.listProducts();
@@ -22,15 +22,15 @@ export async function quoteCart(raw: unknown): Promise<Quote> {
     const p = products.find((x) => x.variants.some((v) => v.id === it.variant_id));
     const v = p?.variants.find((x) => x.id === it.variant_id);
     if (!p || !v) {
-      issues.push("Jedan proizvod iz korpe više nije u ponudi i biće uklonjen.");
+      // Not removed silently: the checkout shows it and lets the customer drop it.
+      issues.push("Jedan proizvod iz korpe više nije u ponudi. Uklonite ga iz korpe.");
+      lines.push({ variant_id: it.variant_id, name: "Proizvod nije dostupan", variant: "", unit_price: 0, quantity: it.quantity, available: false });
       continue;
     }
-    const available = v.stock >= it.quantity;
-    if (!available) issues.push(v.stock === 0 ? `${p.name} je rasprodat.` : `${p.name}: na stanju je još ${v.stock} kom.`);
-    lines.push({ variant_id: v.id, name: p.name, variant: v.name, unit_price: effectivePrice(v), quantity: it.quantity, stock: v.stock, available });
+    lines.push({ variant_id: v.id, name: p.name, variant: v.name, unit_price: effectivePrice(v), quantity: it.quantity, available: true });
   }
   const subtotal = lines.reduce((s, l) => s + l.unit_price * l.quantity, 0);
-  const shipping = shippingFor(subtotal);
+  const shipping = shippingFor(subtotal, method === "preuzimanje" ? "preuzimanje" : "dostava");
   return { lines, subtotal, shipping, total: subtotal + shipping, issues };
 }
 
@@ -46,9 +46,9 @@ export async function placeOrder(form: Record<string, unknown>, items: unknown):
   if (!cart.success) return { ok: false, error: "Korpa je prazna ili neispravna." };
 
   try {
-    // Prices, stock and totals are computed by the store from the database, never taken from the client.
+    // Prices and totals are computed by the store from the database, never taken from the client.
     const order = await store.placeOrder({ ...customer.data, items: cart.data });
-    updateTag(CATALOG); // stock + bestsellers changed
+    updateTag(CATALOG); // bestsellers changed
     return { ok: true, id: order.id };
   } catch (e) {
     if (e instanceof OrderError) return { ok: false, error: e.message };

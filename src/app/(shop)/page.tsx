@@ -7,7 +7,10 @@ import { site } from "@/lib/config";
 
 export default async function HomePage() {
   const [{ categories, products }, bestsellers] = await Promise.all([getCatalog(), getBestsellers(4)]);
-  const flavors = products.filter((p) => p.variants.length === 1); // single-cup flavors (not the mini sets)
+  // Single flavors only: bundles and mini sets have their own sections.
+  const catOf = (slug: string) => categories.find((c) => c.slug === slug)?.id;
+  const flavors = products.filter((p) => p.category_id !== catOf("paketi") && p.category_id !== catOf("mini"));
+  const bundles = products.filter((p) => p.category_id === catOf("paketi"));
 
   return (
     <>
@@ -34,6 +37,9 @@ export default async function HomePage() {
       <CategoryTiles categories={categories} products={products} />
       <FlavorCarousel products={flavors} />
       <ProductRow eyebrow="Omiljeno" title="Najprodavanije" products={bestsellers} categories={categories} />
+      {bundles.length > 0 && (
+        <ProductRow eyebrow="Kombinuj i uštedi" title="Paketi" products={bundles.slice(0, 4)} categories={categories} link={{ href: "/prodavnica?kategorija=paketi", label: "Svi paketi" }} />
+      )}
       <LayerStory />
       <BrandStory />
       <EventsAndPartners />

@@ -2,24 +2,22 @@
 
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { useCart } from "@/components/cart/cart-context";
+import { MAX_QTY, useCart } from "@/components/cart/cart-context";
 import { QtyStepper } from "@/components/cart/qty-stepper";
 import { BagIcon } from "@/components/ui/icons";
 import { effectivePrice, formatRSD, onAccent } from "@/lib/format";
 import type { Product } from "@/lib/types";
-import { LOW_STOCK } from "./product-card";
 
 export function BuyBox({ product }: { product: Product }) {
   const { add, lines } = useCart();
-  const firstAvailable = product.variants.find((v) => v.stock > 0) ?? product.variants[0];
-  const [variantId, setVariantId] = useState(firstAvailable.id);
+  const [variantId, setVariantId] = useState(product.variants[0].id);
   const [qty, setQty] = useState(1);
   const [stuck, setStuck] = useState(false);
   const btnRef = useRef<HTMLButtonElement>(null);
 
-  const v = product.variants.find((x) => x.id === variantId) ?? firstAvailable;
+  const v = product.variants.find((x) => x.id === variantId) ?? product.variants[0];
   const inCart = lines.find((l) => l.variantId === v.id)?.qty ?? 0;
-  const maxQty = Math.max(0, Math.min(20, v.stock - inCart));
+  const maxQty = Math.max(0, MAX_QTY - inCart);
   const fg = onAccent(product.accent);
 
   // Mobile: show a sticky buy bar once the main button scrolls away.
@@ -40,8 +38,7 @@ export function BuyBox({ product }: { product: Product }) {
     setQty(1);
   };
 
-  const disabled = v.stock === 0 || maxQty === 0;
-  const label = v.stock === 0 ? "Rasprodato" : maxQty === 0 ? "Sve sa stanja je u korpi" : "Dodaj u korpu";
+  const full = maxQty === 0;
 
   return (
     <div>
@@ -57,19 +54,10 @@ export function BuyBox({ product }: { product: Product }) {
           <legend className="eyebrow mb-3">Izaberi ukus</legend>
           <div className="flex flex-wrap gap-2">
             {product.variants.map((x) => (
-              <label key={x.id} className={`cursor-pointer ${x.stock === 0 ? "cursor-not-allowed opacity-40" : ""}`}>
-                <input
-                  type="radio"
-                  name="variant"
-                  value={x.id}
-                  checked={x.id === v.id}
-                  disabled={x.stock === 0}
-                  onChange={() => (setVariantId(x.id), setQty(1))}
-                  className="peer sr-only"
-                />
+              <label key={x.id}>
+                <input type="radio" name="variant" value={x.id} checked={x.id === v.id} onChange={() => (setVariantId(x.id), setQty(1))} className="peer sr-only" />
                 <span className="block rounded-full border-[1.5px] border-ink/20 px-4 py-2.5 text-sm font-bold transition-colors peer-checked:border-ink peer-checked:bg-ink peer-checked:text-paper peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-ink">
                   {x.name}
-                  {x.stock === 0 && " · rasprodato"}
                 </span>
               </label>
             ))}
@@ -79,18 +67,13 @@ export function BuyBox({ product }: { product: Product }) {
 
       <div className="mt-7 flex flex-wrap items-center gap-3">
         <QtyStepper value={qty} onChange={setQty} label={product.name} min={1} max={Math.max(1, maxQty)} />
-        <button ref={btnRef} type="button" onClick={addToCart} disabled={disabled} className="btn min-h-12 flex-1 text-base" style={{ background: product.accent, color: fg }}>
-          <BagIcon /> {label}
+        <button ref={btnRef} type="button" onClick={addToCart} disabled={full} className="btn min-h-12 flex-1 text-base" style={{ background: product.accent, color: fg }}>
+          <BagIcon /> {full ? "Maksimalna količina je u korpi" : "Dodaj u korpu"}
         </button>
       </div>
 
-      <p className="mt-4 flex items-center gap-2 text-sm font-semibold">
-        <span className={`h-2.5 w-2.5 rounded-full ${v.stock === 0 ? "bg-berry" : v.stock <= LOW_STOCK ? "bg-amber-500" : "bg-ok"}`} />
-        {v.stock === 0 ? "Trenutno nije na stanju" : v.stock <= LOW_STOCK ? `Na stanju još samo ${v.stock} kom.` : "Na stanju"}
-      </p>
-
       <AnimatePresence>
-        {stuck && !disabled && (
+        {stuck && !full && (
           <motion.div
             initial={{ y: "110%" }}
             animate={{ y: 0 }}

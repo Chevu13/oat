@@ -1,7 +1,7 @@
 -- OAT BOMB — schema, security and order placement.
 -- Security model: the browser only ever holds the anon key.
 --   * catalog: public read of active products (RLS)
---   * orders: written ONLY through place_order() (security definer) which prices + stock-checks server-side
+--   * orders: written ONLY through place_order() (security definer) which validates and prices server-side
 --   * admin: authenticated users listed in public.admins get full access via is_admin()
 
 create extension if not exists pgcrypto;
@@ -44,7 +44,6 @@ create table public.product_variants (
   name text not null check (char_length(name) between 1 and 80),
   price int not null check (price >= 0),
   sale_price int check (sale_price is null or (sale_price >= 0 and sale_price < price)),
-  stock int not null default 0 check (stock >= 0),
   sort int not null default 0
 );
 create index on public.product_variants (product_id);
@@ -60,7 +59,8 @@ create table public.orders (
   city text not null,
   postal_code text not null,
   note text,
-  payment_method text not null default 'pouzece' check (payment_method = 'pouzece'),
+  -- dostava = delivery, paid cash on delivery; preuzimanje = pickup in store, paid at the counter
+  delivery_method text not null default 'dostava' check (delivery_method in ('dostava', 'preuzimanje')),
   subtotal int not null,
   shipping int not null,
   total int not null,
@@ -134,16 +134,16 @@ declare
   v_number text;
   v_subtotal int := 0;
   v_shipping int;
-  r record;
 begin
   if coalesce(char_length(trim(payload->>'customer_name')), 0) not between 2 and 120
      or coalesce(payload->>'email', '') !~* '^[^@\s]+@[^@\s]+\.[^@\s]+$'
      or coalesce(char_length(regexp_replace(payload->>'phone', '\D', '', 'g')), 0) not between 8 and 15
-     or coalesce(char_length(trim(payload->>'street')), 0) not between 3 and 200
-     or coalesce(char_length(trim(payload->>'city')), 0) not between 2 and 80
-     or coalesce(payload->>'postal_code', '') !~ '^\d{5}$'
      or char_length(coalesce(payload->>'note', '')) > 1000
-     or payload->>'payment_method' is distinct from 'pouzece'
+     or coalesce(payload->>'delivery_method', '') not in ('dostava', 'preuzimanje')
+     or (payload->>'delivery_method' = 'dostava' and (
+          coalesce(char_length(trim(payload->>'street')), 0) not between 3 and 200
+          or coalesce(char_length(trim(payload->>'city')), 0) not between 2 and 80
+          or coalesce(payload->>'postal_code', '') !~ '^\d{5}$'))
   then
     raise exception 'INVALID: Podaci za dostavu nisu ispravni.';
   end if;
@@ -167,40 +167,25 @@ begin
     raise exception 'UNAVAILABLE: Jedan od proizvoda iz korpe više nije dostupan.';
   end if;
 
-  -- Lock variants so concurrent orders can't oversell.
-  for r in
-    select l.variant_id, l.quantity, v.stock, v.name as variant_name, coalesce(v.sale_price, v.price) as unit_price,
-           p.name as product_name
-    from _lines l
-    join public.product_variants v on v.id = l.variant_id
-    join public.products p on p.id = v.product_id
-    order by l.variant_id
-    for update of v
-  loop
-    if r.stock < r.quantity then
-      raise exception 'UNAVAILABLE: %', case when r.stock = 0 then r.product_name || ' je trenutno rasprodat.'
-        else r.product_name || ': na stanju je još samo ' || r.stock || ' kom.' end;
-    end if;
-    v_subtotal := v_subtotal + r.unit_price * r.quantity;
-  end loop;
+  select coalesce(sum(coalesce(v.sale_price, v.price) * l.quantity), 0) into v_subtotal
+  from _lines l join public.product_variants v on v.id = l.variant_id;
 
-  v_shipping := case when v_subtotal >= 3000 then 0 else 290 end;
+  v_shipping := case when payload->>'delivery_method' = 'preuzimanje' or v_subtotal >= 3000 then 0 else 290 end;
 
   loop
     v_number := 'OB-' || to_char(now() at time zone 'Europe/Belgrade', 'YYMMDD') || '-' || upper(substr(encode(gen_random_bytes(3), 'hex'), 1, 5));
     exit when not exists (select 1 from public.orders o where o.number = v_number);
   end loop;
 
-  insert into public.orders (id, number, customer_name, email, phone, street, city, postal_code, note, payment_method, subtotal, shipping, total)
+  insert into public.orders (id, number, customer_name, email, phone, street, city, postal_code, note, delivery_method, subtotal, shipping, total)
   values (v_order_id, v_number, trim(payload->>'customer_name'), lower(trim(payload->>'email')), trim(payload->>'phone'),
-          trim(payload->>'street'), trim(payload->>'city'), payload->>'postal_code', nullif(trim(payload->>'note'), ''),
-          'pouzece', v_subtotal, v_shipping, v_subtotal + v_shipping);
+          coalesce(trim(payload->>'street'), ''), coalesce(trim(payload->>'city'), ''), coalesce(payload->>'postal_code', ''), nullif(trim(payload->>'note'), ''),
+          payload->>'delivery_method', v_subtotal, v_shipping, v_subtotal + v_shipping);
 
   insert into public.order_items (order_id, product_id, variant_id, product_name, variant_name, unit_price, quantity, line_total)
   select v_order_id, p.id, v.id, p.name, v.name, coalesce(v.sale_price, v.price), l.quantity, coalesce(v.sale_price, v.price) * l.quantity
   from _lines l join public.product_variants v on v.id = l.variant_id join public.products p on p.id = v.product_id;
 
-  update public.product_variants v set stock = v.stock - l.quantity from _lines l where v.id = l.variant_id;
 
   return query select v_order_id, v_number;
 end $$;

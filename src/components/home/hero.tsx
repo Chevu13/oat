@@ -57,7 +57,7 @@ export function Hero({ flavorCount }: { flavorCount: number }) {
               </Link>
             </div>
             <ul className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm font-semibold">
-              {["Proteinska ovsena baza", "Plaćanje pouzećem", "Mini kaše za događaje"].map((t) => (
+              {["Proteinska ovsena baza", "Dostava ili preuzimanje", "Mini kaše za događaje"].map((t) => (
                 <li key={t} className="flex items-center gap-2">
                   <span className="h-1.5 w-1.5 rounded-full bg-ink" /> {t}
                 </li>

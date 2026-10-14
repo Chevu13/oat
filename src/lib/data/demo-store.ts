@@ -1,7 +1,7 @@
 import "server-only";
 import fs from "node:fs/promises";
 import path from "node:path";
-import { randomUUID, randomBytes } from "node:crypto";
+import { createHash, randomUUID, randomBytes } from "node:crypto";
 import { seedCategories, seedProducts, DEMO_MISSING } from "./seed";
 import { bestsellersFrom, computeDashboard, matchesFilter } from "./shared";
 import { effectivePrice } from "@/lib/format";
@@ -18,10 +18,19 @@ export const UPLOAD_DIR = path.join(DIR, "uploads");
 
 type DB = { categories: Category[]; products: Product[]; orders: Order[] };
 
+/** Same key → same UUID on every server/instance, so carts keep working across restarts and deploys. */
+function stableId(key: string) {
+  const h = createHash("sha1").update(`oatbomb:${key}`).digest();
+  h[6] = (h[6] & 0x0f) | 0x50; // version 5
+  h[8] = (h[8] & 0x3f) | 0x80; // RFC 4122 variant
+  const x = h.subarray(0, 16).toString("hex");
+  return `${x.slice(0, 8)}-${x.slice(8, 12)}-${x.slice(12, 16)}-${x.slice(16, 20)}-${x.slice(20)}`;
+}
+
 function seed(): DB {
-  const categories = seedCategories.map((c) => ({ id: randomUUID(), ...c }));
+  const categories = seedCategories.map((c) => ({ id: stableId(`cat:${c.slug}`), ...c }));
   const products = seedProducts.map((p, i) => {
-    const id = randomUUID();
+    const id = stableId(`product:${p.slug}`);
     return {
       id,
       slug: p.slug,
@@ -40,12 +49,11 @@ function seed(): DB {
       sort: i,
       created_at: new Date(Date.now() - i * 60_000).toISOString(),
       variants: p.variants.map((v, j) => ({
-        id: randomUUID(),
+        id: stableId(`variant:${p.slug}:${v.name}`),
         product_id: id,
         name: v.name,
         price: v.price,
         sale_price: v.sale_price ?? null,
-        stock: v.stock,
         sort: j,
       })),
     };
@@ -119,7 +127,7 @@ export const demoStore: Store = {
 
   placeOrder(input) {
     return write((db) => {
-      // Merge duplicate lines, then price + stock-check everything from the DB — never from the client.
+      // Merge duplicate lines, then price everything from the DB — never from the client.
       const qty = new Map<string, number>();
       for (const i of input.items) qty.set(i.variant_id, (qty.get(i.variant_id) ?? 0) + i.quantity);
 
@@ -127,18 +135,11 @@ export const demoStore: Store = {
         const product = db.products.find((p) => p.is_active && p.variants.some((v) => v.id === variantId));
         const variant = product?.variants.find((v) => v.id === variantId);
         if (!product || !variant) throw new OrderError("Jedan od proizvoda iz korpe više nije dostupan.");
-        if (variant.stock < quantity)
-          throw new OrderError(
-            variant.stock === 0
-              ? `${product.name} je trenutno rasprodat.`
-              : `${product.name}: na stanju je još samo ${variant.stock} kom.`,
-          );
         return { product, variant, quantity };
       });
 
       const subtotal = lines.reduce((s, l) => s + effectivePrice(l.variant) * l.quantity, 0);
-      const shipping = shippingFor(subtotal);
-      for (const l of lines) l.variant.stock -= l.quantity;
+      const shipping = shippingFor(subtotal, input.delivery_method);
 
       const order: Order = {
         id: randomUUID(),
@@ -151,7 +152,7 @@ export const demoStore: Store = {
         city: input.city,
         postal_code: input.postal_code,
         note: input.note,
-        payment_method: "pouzece",
+        delivery_method: input.delivery_method,
         subtotal,
         shipping,
         total: subtotal + shipping,
@@ -269,6 +270,6 @@ export const demoStore: Store = {
 
   async dashboard() {
     const db = await load();
-    return computeDashboard(clone(db.orders), clone(db.products));
+    return computeDashboard(clone(db.orders));
   },
 };

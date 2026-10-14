@@ -9,7 +9,7 @@ import { formatRSD, onAccent, slugify } from "@/lib/format";
 import type { Category, Product } from "@/lib/types";
 import { Card, ConfirmButton, toast } from "./ui";
 
-type V = { id?: string; name: string; price: string; sale_price: string; stock: string };
+type V = { id?: string; name: string; price: string; sale_price: string };
 const KNOWN_MISSING = ["Zvanična cena", "Gramaža", "Sastojci", "Alergeni", "Nutritivne vrednosti"];
 
 export function ProductForm({ product, categories }: { product?: Product; categories: Category[] }) {
@@ -36,8 +36,8 @@ export function ProductForm({ product, categories }: { product?: Product; catego
   const [images, setImages] = useState<string[]>(product?.images ?? []);
   const [missing, setMissing] = useState<string[]>(product?.missing_info ?? KNOWN_MISSING);
   const [variants, setVariants] = useState<V[]>(
-    product?.variants.map((v) => ({ id: v.id, name: v.name, price: String(v.price), sale_price: v.sale_price == null ? "" : String(v.sale_price), stock: String(v.stock) })) ?? [
-      { name: "Standardna čaša", price: "", sale_price: "", stock: "0" },
+    product?.variants.map((v) => ({ id: v.id, name: v.name, price: String(v.price), sale_price: v.sale_price == null ? "" : String(v.sale_price) })) ?? [
+      { name: "Standardna čaša", price: "", sale_price: "" },
     ],
   );
 
@@ -81,7 +81,6 @@ export function ProductForm({ product, categories }: { product?: Product; catego
           name: v.name,
           price: v.price === "" ? NaN : Number(v.price),
           sale_price: v.sale_price === "" ? null : Number(v.sale_price),
-          stock: v.stock === "" ? 0 : Number(v.stock),
         })),
       });
       if (!r.ok) return toast(r.error, "error");
@@ -127,11 +126,11 @@ export function ProductForm({ product, categories }: { product?: Product; catego
           </div>
         </Card>
 
-        <Card title="Cene, varijante i stanje" action={<button type="button" onClick={() => setVariants((v) => [...v, { name: "", price: "", sale_price: "", stock: "0" }])} className="text-sm font-semibold underline underline-offset-4">+ Dodaj varijantu</button>}>
+        <Card title="Cene i varijante" action={<button type="button" onClick={() => setVariants((v) => [...v, { name: "", price: "", sale_price: "" }])} className="text-sm font-semibold underline underline-offset-4">+ Dodaj varijantu</button>}>
           <p className="mb-4 text-sm text-ink-soft">Za proizvod sa jednom cenom ostavite jednu varijantu. Akcijska cena je opciona i mora biti manja od redovne.</p>
           <div className="space-y-3">
             {variants.map((v, i) => (
-              <div key={v.id ?? `new-${i}`} className="grid grid-cols-2 gap-3 rounded-xl bg-paper-2/40 p-3 sm:grid-cols-[1.4fr_1fr_1fr_0.8fr_auto] sm:items-end">
+              <div key={v.id ?? `new-${i}`} className="grid grid-cols-2 gap-3 rounded-xl bg-paper-2/40 p-3 sm:grid-cols-[1.4fr_1fr_1fr_auto] sm:items-end">
                 <L label="Naziv varijante" className="col-span-2 sm:col-span-1">
                   <input className="field !min-h-11" required value={v.name} onChange={(e) => setV(i, { name: e.target.value })} />
                 </L>
@@ -140,9 +139,6 @@ export function ProductForm({ product, categories }: { product?: Product; catego
                 </L>
                 <L label="Akcijska cena">
                   <input className="field !min-h-11" inputMode="numeric" type="number" min={0} step={1} placeholder="—" value={v.sale_price} onChange={(e) => setV(i, { sale_price: e.target.value })} />
-                </L>
-                <L label="Na stanju">
-                  <input className="field !min-h-11" inputMode="numeric" type="number" min={0} step={1} value={v.stock} onChange={(e) => setV(i, { stock: e.target.value })} />
                 </L>
                 <button
                   type="button"

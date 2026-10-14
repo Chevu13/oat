@@ -9,8 +9,8 @@ import { BuyBox } from "@/components/product/buy-box";
 import { ProductCard } from "@/components/product/product-card";
 import { Reveal } from "@/components/ui/reveal";
 import { getCatalog, getProductBySlug } from "@/lib/catalog";
-import { DELIVERY_FEE, FREE_DELIVERY_FROM, site } from "@/lib/config";
-import { effectivePrice, formatRSD, onAccent } from "@/lib/format";
+import { site } from "@/lib/config";
+import { effectivePrice } from "@/lib/format";
 
 export async function generateStaticParams() {
   const { products } = await getCatalog();
@@ -60,8 +60,6 @@ async function Product({ params }: Pick<PageProps<"/proizvod/[slug]">, "params">
   const { product: p, category } = found;
   const { products } = await getCatalog();
   const related = [...products.filter((x) => x.id !== p.id && x.category_id === p.category_id), ...products.filter((x) => x.id !== p.id && x.category_id !== p.category_id)].slice(0, 4);
-  const fg = onAccent(p.accent);
-  const price = Math.min(...p.variants.map(effectivePrice));
 
   const info = [
     { t: "Opis", body: p.description, open: true },
@@ -71,12 +69,9 @@ async function Product({ params }: Pick<PageProps<"/proizvod/[slug]">, "params">
         [p.ingredients && `Sastojci: ${p.ingredients}`, p.allergens && `Alergeni: ${p.allergens}`].filter(Boolean).join("\n") ||
         `Detaljan sastav i informacije o alergenima uskoro objavljujemo. Ako imaš alergiju ili posebne potrebe, pozovi nas na ${site.phone} pre porudžbine.`,
     },
-    { t: "Pakovanje", body: p.weight ? `Neto količina: ${p.weight}` : "Prozirna čaša sa poklopcem i OAT BOMB nalepnicom. Gramaža uskoro." },
-    {
-      t: "Dostava i plaćanje",
-      body: `Plaćanje pouzećem, gotovinom kuriru. Dostava ${formatRSD(DELIVERY_FEE)}, besplatna za porudžbine preko ${formatRSD(FREE_DELIVERY_FROM)}.`,
-    },
   ];
+  // Size the name so its longest word always fits on one line (CHOCO / RASPBERRY, never RASPBER-RY).
+  const longest = Math.max(...p.name.split(/\s+/).map((w) => w.length));
 
   return (
     <>
@@ -95,7 +90,7 @@ async function Product({ params }: Pick<PageProps<"/proizvod/[slug]">, "params">
             name: v.name,
             price: effectivePrice(v),
             priceCurrency: "RSD",
-            availability: v.stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+            availability: "https://schema.org/InStock",
             url: `${site.url}/proizvod/${p.slug}`,
           })),
         }}
@@ -119,7 +114,12 @@ async function Product({ params }: Pick<PageProps<"/proizvod/[slug]">, "params">
                 <span className="h-2.5 w-2.5 rounded-full" style={{ background: p.accent }} /> {category.name}
               </Link>
             )}
-            <h1 className="display mt-3 text-[9.6vw] sm:text-7xl xl:text-8xl">{p.name}</h1>
+            <h1
+              className="display mt-3 [--col:calc(100vw-2rem)] md:[--col:calc(100vw-4rem)] lg:[--col:calc((min(100vw,1440px)-8rem)/2)]"
+              style={{ fontSize: `min(6rem, calc(var(--col) / ${(longest * 0.9).toFixed(2)}))` }}
+            >
+              {p.name}
+            </h1>
             {p.tagline && <p className="hand mt-3 text-3xl">{p.tagline}</p>}
 
             <div className="mt-8">
@@ -127,7 +127,7 @@ async function Product({ params }: Pick<PageProps<"/proizvod/[slug]">, "params">
             </div>
 
             <ul className="mt-8 grid grid-cols-3 gap-2 text-center text-xs font-semibold">
-              {["Proteinska ovsena baza", "Plaćanje pouzećem", "Spremno za poneti"].map((t) => (
+              {["Proteinska ovsena baza", "Dostava ili preuzimanje", "Spremno za poneti"].map((t) => (
                 <li key={t} className="rounded-2xl bg-paper-2 px-2 py-3">
                   {t}
                 </li>
@@ -151,20 +151,8 @@ async function Product({ params }: Pick<PageProps<"/proizvod/[slug]">, "params">
         </div>
       </div>
 
-      <section className="mt-24 overflow-hidden py-16 md:py-20" style={{ background: p.accent, color: fg }}>
-        <p className="display whitespace-nowrap text-[20vw] leading-none opacity-20" aria-hidden>
-          {p.name} · {p.name}
-        </p>
-        <div className="mx-auto -mt-[8vw] flex max-w-[1440px] flex-col items-start gap-4 px-4 md:flex-row md:items-end md:justify-between md:px-8">
-          <p className="hand max-w-xl text-4xl md:text-5xl">Uživanje bez griže savesti, od {formatRSD(price)}.</p>
-          <Link href="/prodavnica" className="btn" style={{ background: fg, color: p.accent }}>
-            Svi ukusi
-          </Link>
-        </div>
-      </section>
-
       {related.length > 0 && (
-        <section className="mx-auto max-w-[1440px] px-4 pt-20 md:px-8">
+        <section className="mx-auto max-w-[1440px] px-4 pt-24 md:px-8">
           <h2 className="display text-5xl md:text-7xl">Probaj i ove</h2>
           <ul className="mt-10 grid grid-cols-2 gap-x-3 gap-y-8 md:gap-x-5 lg:grid-cols-4">
             {related.map((r, n) => (

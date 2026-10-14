@@ -12,7 +12,6 @@ export type Variant = {
   name: string;
   price: number; // RSD, whole dinars
   sale_price: number | null;
-  stock: number;
   sort: number;
 };
 
@@ -47,6 +46,12 @@ export const STATUS_LABEL: Record<OrderStatus, string> = {
   otkazana: "Otkazana",
 };
 
+export const DELIVERY_METHODS = ["dostava", "preuzimanje"] as const;
+export type DeliveryMethod = (typeof DELIVERY_METHODS)[number];
+export const DELIVERY_LABEL: Record<DeliveryMethod, string> = { dostava: "Dostava na adresu", preuzimanje: "Lično preuzimanje u radnji" };
+/** Payment follows from the delivery method: cash to the courier, or at the shop counter. */
+export const PAYMENT_LABEL: Record<DeliveryMethod, string> = { dostava: "Pouzećem, gotovinom kuriru", preuzimanje: "Pri preuzimanju u radnji" };
+
 export type OrderItem = {
   id: string;
   product_id: string | null;
@@ -69,7 +74,8 @@ export type Order = {
   city: string;
   postal_code: string;
   note: string | null;
-  payment_method: "pouzece";
+  /** Missing on orders created before pickup existed → treat as "dostava". */
+  delivery_method?: DeliveryMethod;
   subtotal: number;
   shipping: number;
   total: number;
@@ -85,7 +91,7 @@ export type CheckoutInput = {
   city: string;
   postal_code: string;
   note: string | null;
-  payment_method: "pouzece";
+  delivery_method: DeliveryMethod;
   items: { variant_id: string; quantity: number }[];
 };
 
@@ -105,7 +111,7 @@ export type ProductInput = {
   is_active: boolean;
   is_featured: boolean;
   sort: number;
-  variants: { id?: string; name: string; price: number; sale_price: number | null; stock: number }[];
+  variants: { id?: string; name: string; price: number; sale_price: number | null }[];
 };
 
 export type OrderFilter = { q?: string; status?: OrderStatus; from?: string; to?: string };
@@ -116,7 +122,6 @@ export type DashboardStats = {
   totalValue: number; // excludes cancelled
   recentOrders: Order[];
   bestsellers: { product_name: string; quantity: number; revenue: number }[];
-  lowStock: { product_name: string; variant_name: string; stock: number; product_id: string }[];
 };
 
 /** Thrown by placeOrder when the cart can't be fulfilled; message is customer-facing Serbian. */

@@ -77,7 +77,6 @@ const productSchema = z
           name: z.string().trim().min(1, "Svaka varijanta mora imati naziv.").max(80),
           price: z.coerce.number({ error: "Unesite cenu za svaku varijantu." }).int("Cena mora biti ceo broj.").min(0, "Cena ne može biti negativna.").max(1_000_000),
           sale_price: z.coerce.number().int().min(0).nullable(),
-          stock: z.coerce.number().int("Stanje mora biti ceo broj.").min(0, "Stanje ne može biti negativno.").max(100_000),
         }),
       )
       .min(1, "Proizvod mora imati bar jednu varijantu (cenu)."),

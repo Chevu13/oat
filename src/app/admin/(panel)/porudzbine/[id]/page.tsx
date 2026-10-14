@@ -7,6 +7,7 @@ import { formatDate, formatRSD } from "@/lib/format";
 import { Card } from "@/components/admin/ui";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { StatusForm } from "@/components/admin/status-form";
+import { DELIVERY_LABEL, PAYMENT_LABEL } from "@/lib/types";
 
 export const metadata: Metadata = { title: "Porudžbina" };
 
@@ -15,6 +16,7 @@ export default async function OrderDetail({ params }: PageProps<"/admin/porudzbi
   const { id } = await params;
   const o = await store.getOrder(id);
   if (!o) notFound();
+  const method = o.delivery_method ?? "dostava";
 
   return (
     <>
@@ -62,11 +64,11 @@ export default async function OrderDetail({ params }: PageProps<"/admin/porudzbi
               <dd className="tabular-nums">{formatRSD(o.subtotal)}</dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-ink-soft">Dostava</dt>
-              <dd className="tabular-nums">{o.shipping ? formatRSD(o.shipping) : "Besplatna"}</dd>
+              <dt className="text-ink-soft">{method === "dostava" ? "Dostava" : "Preuzimanje"}</dt>
+              <dd className="tabular-nums">{o.shipping ? formatRSD(o.shipping) : "Besplatno"}</dd>
             </div>
             <div className="flex justify-between pt-1 text-lg font-extrabold">
-              <dt>Ukupno (pouzećem)</dt>
+              <dt>Ukupno ({method === "dostava" ? "pouzećem" : "u radnji"})</dt>
               <dd className="tabular-nums">{formatRSD(o.total)}</dd>
             </div>
           </dl>
@@ -81,8 +83,9 @@ export default async function OrderDetail({ params }: PageProps<"/admin/porudzbi
               <Field k="Ime i prezime" v={o.customer_name} />
               <Field k="Telefon" v={<a href={`tel:${o.phone.replace(/[^\d+]/g, "")}`} className="font-semibold underline underline-offset-2">{o.phone}</a>} />
               <Field k="E-mail" v={<a href={`mailto:${o.email}`} className="underline underline-offset-2">{o.email}</a>} />
-              <Field k="Adresa za dostavu" v={<>{o.street}<br />{o.postal_code} {o.city}</>} />
-              <Field k="Plaćanje" v="Pouzećem" />
+              <Field k="Način preuzimanja" v={<b>{DELIVERY_LABEL[method]}</b>} />
+              {method === "dostava" && <Field k="Adresa za dostavu" v={<>{o.street}<br />{o.postal_code} {o.city}</>} />}
+              <Field k="Plaćanje" v={PAYMENT_LABEL[method]} />
               {o.note && <Field k="Napomena" v={<span className="whitespace-pre-line">{o.note}</span>} />}
             </dl>
           </Card>

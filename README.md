@@ -26,17 +26,18 @@ Katalog se pravi automatski pri prvom pokretanju iz `src/lib/data/seed.ts`. Da s
 
 | Oblast | Funkcije |
 |---|---|
-| Pregled | broj porudžbina, nove porudžbine, ukupna vrednost (bez otkazanih), poslednje porudžbine, najprodavanije, nisko stanje, spisak podataka koji nedostaju |
+| Pregled | broj porudžbina, nove porudžbine, ukupna vrednost (bez otkazanih), poslednje porudžbine, najprodavanije, spisak podataka koji nedostaju |
 | Porudžbine | pretraga (broj, ime, telefon, e-mail, grad), filter po statusu i datumu, detalji, promena statusa (Nova, U obradi, Poslata, Isporučena, Otkazana) |
-| Proizvodi | dodavanje, izmena, brisanje (uz potvrdu), naziv, opis, cena, akcijska cena, upload i redosled slika, kategorija, stanje, varijante, uključi/isključi, istaknut, boja ukusa, sastav/alergeni/gramaža, oznake "nedostaje" |
+| Proizvodi | dodavanje, izmena, brisanje (uz potvrdu), naziv, opis, cena, akcijska cena, upload i redosled slika, kategorija, varijante, uključi/isključi, istaknut, boja ukusa, sastav/alergeni/gramaža, oznake "nedostaje" |
 | Kategorije | dodavanje, izmena, brisanje (uz potvrdu), promena redosleda |
 
 Izmene su odmah vidljive u prodavnici: keš kataloga se poništava (`updateTag("catalog")`), bez ponovnog deploy-a.
 
 ## Bezbednost porudžbina
 
-- Pregledač šalje samo `variant_id` i količinu. **Cene, zalihe, dostavu i ukupan iznos računa server** (`store.placeOrder`), a cene iz pregledača se ignorišu.
-- Zalihe se proveravaju i umanjuju pod zaključavanjem: demo koristi red za upis, a Supabase verzija koristi `FOR UPDATE` u `place_order()`.
+- Pregledač šalje samo `variant_id` i količinu. **Cene, dostavu i ukupan iznos računa server** (`store.placeOrder`), a cene iz pregledača se ignorišu.
+- Način preuzimanja: **dostava na adresu** (plaćanje pouzećem) ili **lično preuzimanje u radnji** (plaćanje na licu mesta, bez troškova dostave).
+- Praćenje zaliha (lager) namerno nije uključeno u demo, i može se dodati kao dorada.
 - Validacija svih polja sa `zod` na klijentu i na serveru, kao i honeypot polje protiv botova.
 
 ## Struktura
@@ -74,7 +75,8 @@ Service-role ključ nije potreban: pretraživač ima samo anon ključ, a RLS i `
 
 ## Šta klijent treba da dostavi pre lansiranja
 
-- **Zvanične cene** za svih 13 proizvoda (sada su demo cene)
+- **Zvanične cene** za svih 13 proizvoda i 6 paketa (sada su demo cene)
+- Adresa radnje i radno vreme za lično preuzimanje
 - Gramaža, sastojci, alergeni i nutritivne vrednosti (označeno u adminu kao "nedostaje")
 - Cena i zone dostave, rok isporuke, radno vreme
 - Uputstvo za čuvanje i rok trajanja

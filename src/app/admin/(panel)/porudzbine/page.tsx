@@ -83,7 +83,7 @@ export default async function OrdersPage({ searchParams }: PageProps<"/admin/por
                   <th className="px-4 py-3">Datum</th>
                   <th className="px-4 py-3">Kupac</th>
                   <th className="px-4 py-3">Telefon</th>
-                  <th className="px-4 py-3">Grad</th>
+                  <th className="px-4 py-3">Preuzimanje</th>
                   <th className="px-4 py-3 text-right">Iznos</th>
                   <th className="px-4 py-3">Status</th>
                 </tr>
@@ -99,7 +99,7 @@ export default async function OrdersPage({ searchParams }: PageProps<"/admin/por
                     <td className="whitespace-nowrap px-4 py-3 text-ink-soft">{formatDate(o.created_at)}</td>
                     <td className="px-4 py-3">{o.customer_name}</td>
                     <td className="whitespace-nowrap px-4 py-3">{o.phone}</td>
-                    <td className="px-4 py-3">{o.city}</td>
+                    <td className="px-4 py-3">{o.delivery_method === "preuzimanje" ? "U radnji" : o.city}</td>
                     <td className="px-4 py-3 text-right font-semibold tabular-nums">{formatRSD(o.total)}</td>
                     <td className="px-4 py-3">
                       <StatusBadge status={o.status} />
@@ -119,7 +119,7 @@ export default async function OrdersPage({ searchParams }: PageProps<"/admin/por
                     <StatusBadge status={o.status} />
                   </div>
                   <p className="mt-1 text-sm">
-                    {o.customer_name} · {o.city}
+                    {o.customer_name} · {o.delivery_method === "preuzimanje" ? "preuzimanje u radnji" : o.city}
                   </p>
                   <div className="mt-2 flex justify-between text-sm">
                     <span className="text-ink-soft">{formatDate(o.created_at)}</span>

@@ -16,7 +16,7 @@ export function FlavorCarousel({ products }: { products: Product[] }) {
   const { add } = useCart();
   const p = products[i];
   const fg = onAccent(p.accent);
-  const v = p.variants.find((x) => x.stock > 0);
+  const v = p.variants[0];
   const go = (d: number) => setState(([cur]) => [(cur + d + products.length) % products.length, d]);
   const jump = (n: number) => setState(([cur]) => [n, n >= cur ? 1 : -1]);
 
@@ -106,7 +106,6 @@ export function FlavorCarousel({ products }: { products: Product[] }) {
             <h3 className="display text-4xl md:text-6xl">{p.name}</h3>
             <p className="hand mt-2 text-2xl md:text-3xl">{p.tagline}</p>
             <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-              {v ? (
                 <button
                   type="button"
                   onClick={() =>
@@ -117,9 +116,6 @@ export function FlavorCarousel({ products }: { products: Product[] }) {
                 >
                   Dodaj u korpu · {formatRSD(effectivePrice(v))}
                 </button>
-              ) : (
-                <span className="btn btn-line opacity-70">Trenutno rasprodato</span>
-              )}
               <Link href={`/proizvod/${p.slug}`} className="btn btn-line" style={{ color: fg }}>
                 Detaljnije
               </Link>

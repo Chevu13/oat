@@ -4,9 +4,10 @@ import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { Suspense } from "react";
 import { store } from "@/lib/data";
+import { FitTitle } from "@/components/site/fit-title";
 import { formatDate, formatRSD } from "@/lib/format";
 import { site } from "@/lib/config";
-import { STATUS_LABEL } from "@/lib/types";
+import { DELIVERY_LABEL, PAYMENT_LABEL, STATUS_LABEL } from "@/lib/types";
 
 export const metadata: Metadata = { title: "Porudžbina primljena", robots: { index: false } };
 
@@ -26,13 +27,14 @@ async function Order({ params }: Pick<PageProps<"/porudzbina/[id]">, "params">) 
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
   const o = await store.getOrderPublic(id);
   if (!o) notFound();
+  const method = o.delivery_method ?? "dostava";
 
   return (
     <>
       <div className="text-center">
         <p className="anim-pop mx-auto grid h-20 w-20 place-items-center rounded-full bg-ink text-4xl text-paper">✓</p>
         <p className="hand mt-6 text-3xl">Hvala, {o.customer_name.split(" ")[0]}!</p>
-        <h1 className="display mt-2 text-[9.6vw] md:text-8xl">Porudžbina je primljena</h1>
+        <FitTitle text="Porudžbina je primljena" max="6rem" maxWidth={768} className="mt-2" />
         <p className="mx-auto mt-4 max-w-md text-ink-soft">
           Kontaktiraćemo te na <b className="text-ink">{o.phone}</b> radi potvrde porudžbine. Sačuvaj broj porudžbine ispod.
         </p>
@@ -65,28 +67,36 @@ async function Order({ params }: Pick<PageProps<"/porudzbina/[id]">, "params">) 
             <dd className="tabular-nums">{formatRSD(o.subtotal)}</dd>
           </div>
           <div className="flex justify-between">
-            <dt className="text-ink-soft">Dostava</dt>
-            <dd className="tabular-nums">{o.shipping ? formatRSD(o.shipping) : "Besplatna"}</dd>
+            <dt className="text-ink-soft">{method === "dostava" ? "Dostava" : "Preuzimanje"}</dt>
+            <dd className="tabular-nums">{o.shipping ? formatRSD(o.shipping) : "Besplatno"}</dd>
           </div>
           <div className="flex justify-between pt-2 text-xl font-extrabold">
-            <dt>Za plaćanje pouzećem</dt>
+            <dt>{method === "dostava" ? "Za plaćanje pouzećem" : "Za plaćanje u radnji"}</dt>
             <dd className="tabular-nums">{formatRSD(o.total)}</dd>
           </div>
         </dl>
         <div className="mt-6 grid gap-4 rounded-2xl bg-paper-2 p-5 text-sm sm:grid-cols-2">
           <div>
-            <p className="eyebrow mb-1 text-ink-soft">Dostava na adresu</p>
-            <p>
-              {o.customer_name}
-              <br />
-              {o.street}
-              <br />
-              {o.postal_code} {o.city}
-            </p>
+            <p className="eyebrow mb-1 text-ink-soft">{DELIVERY_LABEL[method]}</p>
+            {method === "dostava" ? (
+              <p>
+                {o.customer_name}
+                <br />
+                {o.street}
+                <br />
+                {o.postal_code} {o.city}
+              </p>
+            ) : (
+              <p>
+                {o.customer_name}
+                <br />
+                {site.pickup}
+              </p>
+            )}
           </div>
           <div>
             <p className="eyebrow mb-1 text-ink-soft">Plaćanje</p>
-            <p>Pouzećem, gotovinom kuriru</p>
+            <p>{PAYMENT_LABEL[method]}</p>
             {o.note && (
               <>
                 <p className="eyebrow mb-1 mt-3 text-ink-soft">Napomena</p>

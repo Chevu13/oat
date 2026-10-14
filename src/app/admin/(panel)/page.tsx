@@ -43,7 +43,7 @@ export default async function Dashboard() {
                         {o.number} <span className="font-normal text-ink-soft">· {o.customer_name}</span>
                       </p>
                       <p className="text-xs text-ink-soft">
-                        {formatDate(o.created_at)} · {o.city}
+                        {formatDate(o.created_at)} · {o.delivery_method === "preuzimanje" ? "preuzimanje" : o.city}
                       </p>
                     </div>
                     <div className="flex shrink-0 items-center gap-3">
@@ -71,25 +71,6 @@ export default async function Dashboard() {
                   </li>
                 ))}
               </ol>
-            )}
-          </Card>
-          <Card title="Nisko stanje">
-            {s.lowStock.length === 0 ? (
-              <Empty text="Svi proizvodi imaju dovoljno zaliha." />
-            ) : (
-              <ul className="space-y-2">
-                {s.lowStock.map((l) => (
-                  <li key={l.product_id + l.variant_name}>
-                    <Link href={`/admin/proizvodi/${l.product_id}`} className="flex items-center justify-between gap-3 rounded-lg hover:underline">
-                      <span className="text-sm font-semibold">
-                        {l.product_name}
-                        {l.variant_name !== "Standardna čaša" && <span className="text-ink-soft"> · {l.variant_name}</span>}
-                      </span>
-                      <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${l.stock === 0 ? "bg-berry text-white" : "bg-amber-100 text-amber-900"}`}>{l.stock === 0 ? "Rasprodato" : `${l.stock} kom`}</span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
             )}
           </Card>
         </div>
