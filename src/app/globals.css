@@ -1,26 +1,194 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  --color-paper: #f2efe7;
+  --color-paper-2: #e7e1d3;
+  --color-ink: #121110;
+  --color-ink-soft: #5d5852;
+  --color-line: rgb(18 17 16 / 0.12);
+  --color-berry: #b4173f;
+  --color-oat: #d8c9a9;
+  --color-ok: #2f6b3a;
+
+  --font-sans: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+  --font-hand: var(--font-caveat), cursive;
+
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-marquee: marquee 38s linear infinite;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@keyframes marquee {
+  to {
+    transform: translateX(-50%);
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-padding-top: 6rem;
+  }
+  body {
+    overflow-x: clip;
+    background-color: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-feature-settings: "ss01";
+    /* paper grain */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .055 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  ::selection {
+    background: var(--color-ink);
+    color: var(--color-paper);
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-ink);
+    outline-offset: 3px;
+  }
+  input,
+  textarea,
+  select {
+    font: inherit;
+  }
+}
+
+@layer base {
+  /* Long display words must never widen a grid column past the viewport. */
+  .grid > * {
+    min-width: 0;
+  }
+}
+
+@layer components {
+  /* Wide, heavy grotesk — the voice of OAT BOMB's flavor posters. */
+  .display {
+    overflow-wrap: break-word;
+    font-stretch: 125%;
+    font-weight: 850;
+    text-transform: uppercase;
+    line-height: 0.86;
+    letter-spacing: -0.025em;
+  }
+  .eyebrow {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+  .hand {
+    font-family: var(--font-hand);
+    font-weight: 600;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    min-height: 3.25rem;
+    padding: 0 1.6rem;
+    border-radius: 999px;
+    font-weight: 700;
+    font-stretch: 112%;
+    font-size: 0.95rem;
+    letter-spacing: 0.01em;
+    transition:
+      transform 0.35s var(--ease-out-expo),
+      background-color 0.25s,
+      color 0.25s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .btn:active {
+    transform: scale(0.97);
+  }
+  .btn:disabled {
+    opacity: 0.45;
+    pointer-events: none;
+  }
+  .btn-ink {
+    background: var(--color-ink);
+    color: var(--color-paper);
+  }
+  .btn-ink:hover {
+    background: #2b2826;
+  }
+  .btn-line {
+    border: 1.5px solid currentColor;
+  }
+  .btn-line:hover {
+    background: var(--color-ink);
+    color: var(--color-paper);
+    border-color: var(--color-ink);
+  }
+
+  /* Torn paper edges (same irregular silhouette as the brand's crumpled-paper posts). */
+  .torn-b {
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 24' preserveAspectRatio='none'%3E%3Cpath d='M0 0H1200V14L1180 18 1152 11 1121 19 1090 12 1062 20 1031 13 1002 21 970 12 941 18 913 10 882 19 851 13 822 22 790 14 761 19 733 11 702 20 671 12 643 18 611 13 582 21 551 12 523 19 492 11 461 20 433 14 401 21 372 12 341 18 313 11 282 20 251 13 222 19 190 12 161 21 133 14 102 19 71 11 42 20 18 13 0 18Z'/%3E%3C/svg%3E")
+        bottom / 100% 24px no-repeat,
+      linear-gradient(#000, #000) top / 100% calc(100% - 23px) no-repeat;
+  }
+  .torn-t {
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 24' preserveAspectRatio='none'%3E%3Cpath d='M0 24H1200V10L1176 6 1149 13 1118 5 1089 12 1058 4 1030 11 999 3 968 12 940 6 909 14 880 5 849 11 820 2 789 10 760 5 731 13 700 4 669 12 641 6 610 11 581 3 550 12 521 5 490 13 461 4 430 10 401 3 370 12 342 6 311 13 280 4 251 11 220 5 189 12 161 3 130 10 101 5 70 13 41 4 12 11 0 6Z'/%3E%3C/svg%3E")
+        top / 100% 24px no-repeat,
+      linear-gradient(#000, #000) bottom / 100% calc(100% - 23px) no-repeat;
+  }
+
+  /* Black marbled tape strip from the brand's collage posts. */
+  .tape {
+    position: absolute;
+    width: 7.5rem;
+    height: 1.9rem;
+    background:
+      linear-gradient(115deg, transparent 40%, rgb(255 255 255 / 0.22) 47%, transparent 54%),
+      linear-gradient(170deg, #2a2827, #121110 60%, #3a3735);
+    opacity: 0.92;
+    clip-path: polygon(3% 8%, 97% 0, 100% 90%, 1% 100%);
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.2);
+    z-index: 2;
+  }
+
+  .field {
+    width: 100%;
+    min-height: 3.25rem;
+    border-radius: 0.9rem;
+    border: 1.5px solid var(--color-line);
+    background: rgb(255 255 255 / 0.65);
+    padding: 0.75rem 1rem;
+    font-size: 1rem; /* ≥16px: no iOS zoom on focus */
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .field:focus {
+    outline: none;
+    border-color: var(--color-ink);
+    background: #fff;
+  }
+  .field[aria-invalid="true"] {
+    border-color: var(--color-berry);
+  }
+}
+
+/* Pre-hydration entrance animations (hero) */
+@keyframes rise { from { transform: translateY(105%); } }
+@keyframes fade { from { opacity: 0; } }
+@keyframes fade-up { from { opacity: 0; transform: translateY(16px); } }
+@keyframes card { from { opacity: 0; transform: translateY(60px) rotate(-7deg); } to { transform: rotate(-2.5deg); } }
+@keyframes pop { from { opacity: 0; transform: scale(0) rotate(var(--r, 0deg)); } 60% { transform: scale(1.12) rotate(var(--r, 0deg)); } to { transform: scale(1) rotate(var(--r, 0deg)); } }
+@keyframes draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+.anim-page { animation: fade 0.45s ease both; }
+.anim-rise { animation: rise 1s var(--ease-out-expo) both; }
+.anim-fade { animation: fade 0.8s ease both; }
+.anim-fade-up { animation: fade-up 0.8s var(--ease-out-expo) both; }
+.anim-card { animation: card 1.2s var(--ease-out-expo) both; transform: rotate(-2.5deg); }
+.anim-pop { animation: pop 0.7s var(--ease-out-expo) both; transform: rotate(var(--r, 0deg)); }
+.anim-draw { stroke-dasharray: 1; animation: draw 0.9s var(--ease-out-expo) both; }
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
