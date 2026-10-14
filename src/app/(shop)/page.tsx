@@ -1,6 +1,6 @@
 import { Hero } from "@/components/home/hero";
 import { FlavorCarousel } from "@/components/home/flavor-carousel";
-import { BrandStory, CategoryTiles, EventsAndPartners, InstagramGrid, LayerStory, Marquee, ProductRow } from "@/components/home/sections";
+import { BrandStory, CategoryTiles, EventsAndPartners, InstagramGrid, Marquee, ProductRow } from "@/components/home/sections";
 import { getBestsellers, getCatalog } from "@/lib/catalog";
 import { JsonLd } from "@/components/site/json-ld";
 import { site } from "@/lib/config";
@@ -40,7 +40,6 @@ export default async function HomePage() {
       {bundles.length > 0 && (
         <ProductRow eyebrow="Kombinuj i uštedi" title="Paketi" products={bundles.slice(0, 4)} categories={categories} link={{ href: "/prodavnica?kategorija=paketi", label: "Svi paketi" }} />
       )}
-      <LayerStory />
       <BrandStory />
       <EventsAndPartners />
       <InstagramGrid />

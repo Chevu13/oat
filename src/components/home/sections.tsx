@@ -98,51 +98,6 @@ export function ProductRow({
   );
 }
 
-const layers = [
-  { top: "25%", n: "03", t: "Vrh", d: "Toping koji daje završni udarac: kakao, voće, orašasti plodovi ili glazura." },
-  { top: "40%", n: "02", t: "Sloj", d: "Krem, voće ili čokolada. Svaki ukus ima svoj karakter." },
-  { top: "74%", n: "01", t: "Baza", d: "Kremasta proteinska ovsena kaša. Temelj koji drži ceo dan." },
-];
-
-export function LayerStory() {
-  return (
-    <section className="relative overflow-x-clip bg-paper-2/70 py-20 md:py-28" aria-labelledby="sloj">
-      <div className="mx-auto grid max-w-[1440px] items-center gap-12 px-4 md:px-8 lg:grid-cols-2 lg:gap-20">
-        <Reveal className="relative mx-auto w-full max-w-[520px]">
-          <div className="relative aspect-[4/5] overflow-hidden rounded-[2rem]">
-            <Image src="/images/products/tiramisu.jpg" alt="Presek slojeva OAT BOMB Tiramisu kaše" fill sizes="(min-width:1024px) 520px, 92vw" className="object-cover" />
-          </div>
-          {layers.map((l) => (
-            <div key={l.n} className="absolute right-3 flex items-center gap-2 md:right-0 md:translate-x-[30%]" style={{ top: l.top }}>
-              <span className="h-px w-10 bg-ink md:w-20" />
-              <span className="rounded-full bg-ink px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-paper">{l.t}</span>
-            </div>
-          ))}
-        </Reveal>
-        <div>
-          <p className="eyebrow text-ink-soft">Anatomija jedne bombe</p>
-          <h2 id="sloj" className="display mt-3 text-[13vw] sm:text-7xl lg:text-8xl">
-            Sloj
-            <br />
-            po sloj.
-          </h2>
-          <ol className="mt-10 space-y-8">
-            {[...layers].reverse().map((l, n) => (
-              <Reveal as="li" key={l.n} delay={n * 0.1} className="grid grid-cols-[auto_1fr] gap-5 border-t border-ink/15 pt-6">
-                <span className="display text-3xl text-ink/30">{l.n}</span>
-                <div>
-                  <p className="text-xl font-extrabold uppercase [font-stretch:118%]">{l.t}</p>
-                  <p className="mt-1 max-w-md text-ink-soft">{l.d}</p>
-                </div>
-              </Reveal>
-            ))}
-          </ol>
-        </div>
-      </div>
-    </section>
-  );
-}
-
 export function BrandStory() {
   return (
     <section className="mx-auto grid max-w-[1440px] items-center gap-14 px-4 py-24 md:px-8 md:py-32 lg:grid-cols-[1fr_1.1fr]">
@@ -193,7 +148,7 @@ export function EventsAndPartners() {
           </div>
         </div>
       </Reveal>
-      <Reveal delay={0.08} className="relative flex min-h-[560px] flex-col overflow-hidden rounded-[2rem] bg-ink p-6 text-paper md:p-10">
+      <Reveal delay={0.08} className="relative flex flex-col overflow-hidden rounded-[2rem] bg-ink p-6 text-paper md:p-10">
         <p className="eyebrow text-paper/60" id="saradnja-home">Za kafiće, teretane i prodavnice</p>
         <h2 className="display mt-2 text-4xl sm:text-5xl md:text-6xl">Oat Bomb u vašem objektu</h2>
         <p className="mt-4 max-w-md text-paper/80">
@@ -202,8 +157,8 @@ export function EventsAndPartners() {
         <Link href="/kontakt#saradnja" className="btn mt-6 self-start bg-paper text-ink hover:bg-oat">
           Javi se za saradnju <ArrowIcon />
         </Link>
-        <div className="relative -mx-6 -mb-6 mt-8 flex-1 md:-mx-10 md:-mb-10">
-          <Image src="/images/lifestyle/kraft-carriers.jpg" alt="OAT BOMB kaše u kartonskim nosačima" fill sizes="(min-width:1024px) 50vw, 100vw" className="object-cover object-[50%_62%]" />
+        <div className="relative mt-8 aspect-[16/10] w-full overflow-hidden rounded-[1.25rem] lg:mt-auto">
+          <Image src="/images/lifestyle/kraft-carriers.jpg" alt="OAT BOMB kaše u kartonskim nosačima" fill sizes="(min-width:1024px) 45vw, 90vw" className="object-cover object-[50%_75%]" />
         </div>
       </Reveal>
     </section>
