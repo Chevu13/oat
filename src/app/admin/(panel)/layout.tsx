@@ -56,9 +56,6 @@ async function Gate({ children }: { children: React.ReactNode }) {
       </header>
 
       <div className="min-w-0">
-        <p className="bg-amber-100 px-4 py-2 text-center text-xs font-semibold text-amber-900 md:px-8">
-          Demo režim: podaci se čuvaju lokalno (JSON fajl), bez baze. Supabase se povezuje nakon odobrenja sajta.
-        </p>
         <main className="mx-auto max-w-[1200px] px-4 pb-28 pt-6 md:px-8 md:pb-12 md:pt-8">{children}</main>
       </div>
       <BottomNav />

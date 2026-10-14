@@ -2,7 +2,7 @@
 
 Prodavnica proteinskih ovsenih kaša OAT BOMB: Next.js 16 (App Router, Cache Components), TypeScript, Tailwind CSS 4, Motion.
 
-> **Demo režim.** Sajt trenutno radi **bez baze**: podaci se čuvaju u JSON fajlu (`.data/demo-db.json`). Supabase se povezuje tek kada klijent odobri sajt (vidi dole). Cene su **demo vrednosti**: zvanične cene nisu javno dostupne.
+> **Demo režim.** Sajt radi **bez baze**: lokalno se podaci čuvaju u JSON fajlu (`.data/demo-db.json`), a na Vercelu u besplatnom Upstash Redis skladištu. Supabase se povezuje tek kada klijent odobri sajt (vidi dole). Cene su **demo vrednosti**: zvanične cene nisu javno dostupne.
 
 ## Pokretanje
 
@@ -54,11 +54,13 @@ scripts/               obrada slika i generisanje seed.sql
 
 ## Deploy demo verzije na Vercel
 
-1. Postaviti projekat na GitHub i importovati ga u Vercel (framework: Next.js).
-2. Environment variables: `NEXT_PUBLIC_SITE_URL` (npr. `https://oatbomb.vercel.app`), `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `SESSION_SECRET` (min. 32 karaktera), `NEXT_PUBLIC_SHOW_DEMO_NOTICE=true`.
-3. Deploy.
+1. Importovati GitHub repo u Vercel (framework: Next.js).
+2. **Storage → Create → Upstash (Redis) → Free → Connect to project.** Vercel sam dodaje `KV_REST_API_URL` i `KV_REST_API_TOKEN`.
+   Ovo je obavezno: Vercel pokreće svaku rutu kao zasebnu funkciju, pa bez zajedničkog skladišta porudžbina iz korpe ne bi bila vidljiva na stranici potvrde ni u adminu. Redis ovde služi kao demo skladište (katalog, porudžbine, otpremljene slike), a ne kao prava baza.
+3. Environment variables: `NEXT_PUBLIC_SITE_URL` (npr. `https://oat-orpin.vercel.app`), a za zaštićen admin `ADMIN_REQUIRE_LOGIN=true`, `ADMIN_EMAIL`, `ADMIN_PASSWORD` i `SESSION_SECRET` (min. 32 karaktera).
+4. Redeploy.
 
-⚠ Na Vercelu demo podaci idu u `/tmp`, koji je privremen i poseban za svaku instancu servera. Porudžbine i izmene iz admina zato mogu da nestanu posle neaktivnosti ili da se ne vide sa druge instance. To je dovoljno za prezentaciju, ali **ne i za pravu prodaju**: za to je potreban Supabase.
+Sa Redisom se izmene iz admina vide u prodavnici najkasnije za ~30 sekundi (keš na drugim instancama). Lokalno (`npm run dev` / `npm start`) Redis nije potreban: podaci idu u `.data/demo-db.json`.
 
 ## Povezivanje na Supabase (posle odobrenja)
 

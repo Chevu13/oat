@@ -5,7 +5,7 @@ import { store } from "@/lib/data";
 import { CATALOG } from "@/lib/catalog";
 import { shippingFor } from "@/lib/config";
 import { effectivePrice } from "@/lib/format";
-import { OrderError } from "@/lib/types";
+import { OrderError, type Order } from "@/lib/types";
 import { customerSchema, fieldErrors, itemsSchema, type FieldErrors } from "@/lib/validation";
 
 export type QuoteLine = { variant_id: string; name: string; variant: string; unit_price: number; quantity: number; available: boolean };
@@ -34,7 +34,7 @@ export async function quoteCart(raw: unknown, method: unknown = "dostava"): Prom
   return { lines, subtotal, shipping, total: subtotal + shipping, issues };
 }
 
-export type PlaceOrderResult = { ok: true; id: string } | { ok: false; error: string; fields?: FieldErrors };
+export type PlaceOrderResult = { ok: true; id: string; order: Order | null } | { ok: false; error: string; fields?: FieldErrors };
 
 export async function placeOrder(form: Record<string, unknown>, items: unknown): Promise<PlaceOrderResult> {
   // Honeypot: real users never fill this hidden field.
@@ -49,7 +49,7 @@ export async function placeOrder(form: Record<string, unknown>, items: unknown):
     // Prices and totals are computed by the store from the database, never taken from the client.
     const order = await store.placeOrder({ ...customer.data, items: cart.data });
     updateTag(CATALOG); // bestsellers changed
-    return { ok: true, id: order.id };
+    return { ok: true, id: order.id, order: await store.getOrderPublic(order.id) };
   } catch (e) {
     if (e instanceof OrderError) return { ok: false, error: e.message };
     console.error("placeOrder failed", e);

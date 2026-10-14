@@ -8,13 +8,18 @@ import { effectivePrice } from "@/lib/format";
 import { shippingFor } from "@/lib/config";
 import { OrderError, type Category, type Order, type Product } from "@/lib/types";
 import type { Store } from "./store";
+import { redis, redisEnabled } from "./redis";
 
-// DEMO MODE: a JSON file stands in for the database so the whole shop works without Supabase.
-// It is NOT a production database: single process, no backups. On Vercel the filesystem is read-only
-// except /tmp, so data there is per-instance and resets on cold starts — fine for a presentation.
+// DEMO STORAGE — no database. Two backends behind the same load/persist pair:
+//  • Upstash Redis (when configured, e.g. on Vercel): shared by every serverless function/instance.
+//    Catalog lives in one key; each order is its own hash field, so concurrent orders never overwrite each other.
+//  • Local JSON file (development): .data/demo-db.json.
 const DIR = process.env.VERCEL ? "/tmp/oatbomb" : path.join(process.cwd(), ".data");
 const FILE = path.join(DIR, "demo-db.json");
 export const UPLOAD_DIR = path.join(DIR, "uploads");
+const K_CATALOG = "oatbomb:catalog";
+const K_ORDERS = "oatbomb:orders";
+export const imageKey = (name: string) => `oatbomb:img:${name}`;
 
 type DB = { categories: Category[]; products: Product[]; orders: Order[] };
 
@@ -61,37 +66,50 @@ function seed(): DB {
   return { categories, products, orders: [] };
 }
 
-// Next bundles each route separately; keeping state on globalThis gives every bundle in the
-// process the same in-memory DB and write queue (otherwise admin edits could miss the storefront).
-const g = globalThis as typeof globalThis & { __oatbomb?: { db: DB | null; loading: Promise<DB> | null; queue: Promise<unknown> } };
-const state = (g.__oatbomb ??= { db: null, loading: null, queue: Promise.resolve() });
+// File mode keeps one in-memory copy per process (on globalThis so every route bundle shares it).
+const g = globalThis as typeof globalThis & { __oatbomb?: { db: DB | null; queue: Promise<unknown> } };
+const state = (g.__oatbomb ??= { db: null, queue: Promise.resolve() });
 
 async function load(): Promise<DB> {
-  if (state.db) return state.db;
-  state.loading ??= (async () => {
-    try {
-      state.db = JSON.parse(await fs.readFile(FILE, "utf8")) as DB;
-    } catch {
-      state.db = seed();
-      await persist();
+  if (redisEnabled) {
+    // Always fresh: other instances may have written since.
+    const [catalog, orders] = await Promise.all([redis<string | null>("GET", K_CATALOG), redis<string[]>("HVALS", K_ORDERS)]);
+    if (!catalog) {
+      const db = seed();
+      await redis("SET", K_CATALOG, JSON.stringify({ categories: db.categories, products: db.products }), "NX");
+      return load();
     }
-    return state.db;
-  })();
-  return state.loading;
+    return { ...(JSON.parse(catalog) as Omit<DB, "orders">), orders: orders.map((o) => JSON.parse(o) as Order) };
+  }
+  if (state.db) return state.db;
+  try {
+    state.db = JSON.parse(await fs.readFile(FILE, "utf8")) as DB;
+  } catch {
+    state.db = seed();
+    await persist(state.db);
+  }
+  return state.db;
 }
-async function persist() {
+
+async function persist(db: DB) {
+  if (redisEnabled) {
+    // ponytail: last-writer-wins on the catalog (fine for one admin); orders are per-field so new orders never collide.
+    await redis("SET", K_CATALOG, JSON.stringify({ categories: db.categories, products: db.products }));
+    if (db.orders.length) await redis("HSET", K_ORDERS, ...db.orders.flatMap((o) => [o.id, JSON.stringify(o)]));
+    return;
+  }
   await fs.mkdir(DIR, { recursive: true });
   const tmp = `${FILE}.tmp`;
-  await fs.writeFile(tmp, JSON.stringify(state.db, null, 2));
+  await fs.writeFile(tmp, JSON.stringify(db, null, 2));
   await fs.rename(tmp, FILE); // atomic replace: a crash mid-write can't corrupt the DB
 }
 
-// Serialize writes so concurrent orders can't oversell (single-process demo only).
+// Serialize writes within a process.
 function write<T>(fn: (db: DB) => T | Promise<T>): Promise<T> {
   const run = state.queue.then(async () => {
     const db = await load();
     const res = await fn(db);
-    await persist();
+    await persist(db);
     return res;
   });
   state.queue = run.catch(() => {});
@@ -262,6 +280,14 @@ export const demoStore: Store = {
   async uploadImage(file) {
     const ext = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "image/avif": "avif" }[file.type];
     if (!ext) throw new Error("Dozvoljeni formati: JPG, PNG, WEBP, AVIF.");
+    if (redisEnabled) {
+      // Shrink to a web-sized WebP so it fits comfortably in one Redis value (~100–300 KB).
+      const { default: sharp } = await import("sharp");
+      const webp = await sharp(Buffer.from(await file.arrayBuffer())).rotate().resize({ width: 1400, withoutEnlargement: true }).webp({ quality: 80 }).toBuffer();
+      const name = `${randomUUID()}.webp`;
+      await redis("SET", imageKey(name), webp.toString("base64"));
+      return `/api/uploads/${name}`;
+    }
     await fs.mkdir(UPLOAD_DIR, { recursive: true });
     const name = `${randomUUID()}.${ext}`;
     await fs.writeFile(path.join(UPLOAD_DIR, name), Buffer.from(await file.arrayBuffer()));

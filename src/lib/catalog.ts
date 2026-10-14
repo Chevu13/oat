@@ -1,15 +1,19 @@
 import "server-only";
 import { cacheLife, cacheTag } from "next/cache";
 import { store } from "@/lib/data";
+import { redisEnabled } from "@/lib/data/redis";
 import type { Product } from "@/lib/types";
 
 /** Storefront reads. Admin mutations and new orders call updateTag(CATALOG) so changes show immediately. */
 export const CATALOG = "catalog";
+// With shared Redis storage (Vercel) another serverless instance may hold an older cache entry,
+// so keep entries short there; locally a single process sees updateTag() immediately.
+const LIFE = redisEnabled ? { stale: 30, revalidate: 30, expire: 300 } : { stale: 300, revalidate: 3600, expire: 86400 };
 
 export async function getCatalog() {
   "use cache";
   cacheTag(CATALOG);
-  cacheLife("hours");
+  cacheLife(LIFE);
   const [categories, products] = await Promise.all([store.listCategories(), store.listProducts()]);
   return { categories, products };
 }
@@ -24,7 +28,7 @@ export async function getProductBySlug(slug: string) {
 export async function getBestsellers(limit = 4): Promise<Product[]> {
   "use cache";
   cacheTag(CATALOG);
-  cacheLife("hours");
+  cacheLife(LIFE);
   const [{ products }, ids] = await Promise.all([getCatalog(), store.bestsellerIds(limit)]);
   const ranked = ids.map((id) => products.find((p) => p.id === id)).filter((p): p is Product => Boolean(p));
   // Until real sales exist, fill with featured products.

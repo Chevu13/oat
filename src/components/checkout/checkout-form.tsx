@@ -11,6 +11,7 @@ import { customerSchema, fieldErrors, fieldRules, type FieldErrors } from "@/lib
 import { DELIVERY_FEE, FREE_DELIVERY_FROM, site } from "@/lib/config";
 import type { DeliveryMethod } from "@/lib/types";
 import { placeOrder, quoteCart, type Quote } from "@/app/(shop)/placanje/actions";
+import { orderSnapshotKey } from "./order-from-browser";
 
 type Field = keyof FieldErrors;
 const ADDRESS: Field[] = ["street", "city", "postal_code"];
@@ -68,6 +69,10 @@ export function CheckoutForm() {
     start(async () => {
       const res = await placeOrder(payload, items);
       if (res.ok) {
+        try {
+          // Lets the confirmation page render even if it's served by a server that hasn't seen the order.
+          if (res.order) sessionStorage.setItem(orderSnapshotKey(res.id), JSON.stringify(res.order));
+        } catch {}
         setPlaced(true);
         clear();
         router.push(`/porudzbina/${res.id}`);

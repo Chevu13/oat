@@ -22,4 +22,3 @@ export const FREE_DELIVERY_FROM = 3000;
 export const shippingFor = (subtotal: number, method: "dostava" | "preuzimanje" = "dostava") =>
   method === "preuzimanje" || subtotal === 0 || subtotal >= FREE_DELIVERY_FROM ? 0 : DELIVERY_FEE;
 
-export const showDemoNotice = process.env.NEXT_PUBLIC_SHOW_DEMO_NOTICE !== "false";
