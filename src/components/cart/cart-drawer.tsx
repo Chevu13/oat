@@ -150,7 +150,7 @@ export function CartDrawer() {
                 <div className="border-t border-line bg-paper-2/60 px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-4">
                   <dl className="space-y-1.5 text-sm">
                     <div className="flex justify-between">
-                      <dt className="text-ink-soft">Međuzbir</dt>
+                      <dt className="text-ink-soft">Proizvodi</dt>
                       <dd className="tabular-nums">{formatRSD(subtotal)}</dd>
                     </div>
                     <div className="flex justify-between">

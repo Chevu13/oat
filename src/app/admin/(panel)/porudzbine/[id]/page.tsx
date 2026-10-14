@@ -60,7 +60,7 @@ export default async function OrderDetail({ params }: PageProps<"/admin/porudzbi
           </div>
           <dl className="mt-4 space-y-1.5 border-t border-line pt-4 text-sm">
             <div className="flex justify-between">
-              <dt className="text-ink-soft">Međuzbir</dt>
+              <dt className="text-ink-soft">Proizvodi</dt>
               <dd className="tabular-nums">{formatRSD(o.subtotal)}</dd>
             </div>
             <div className="flex justify-between">

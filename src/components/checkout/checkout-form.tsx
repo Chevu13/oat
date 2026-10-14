@@ -209,7 +209,7 @@ export function CheckoutForm() {
             })}
           </ul>
           <dl className="mt-4 space-y-2 border-t border-line pt-4 text-sm">
-            <Row k="Međuzbir" v={quote ? formatRSD(quote.subtotal) : "…"} />
+            <Row k="Proizvodi" v={quote ? formatRSD(quote.subtotal) : "…"} />
             <Row k={method === "dostava" ? "Dostava" : "Preuzimanje"} v={quote ? (quote.shipping === 0 ? "Besplatno" : formatRSD(quote.shipping)) : "…"} />
             <div className="flex justify-between pt-2 text-xl font-extrabold">
               <dt>Ukupno</dt>
