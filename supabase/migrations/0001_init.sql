@@ -88,6 +88,19 @@ create table public.admins (
   created_at timestamptz not null default now()
 );
 
+-- Saradnja / contact form
+create table public.inquiries (
+  id uuid primary key default gen_random_uuid(),
+  name text not null check (char_length(name) between 2 and 120),
+  company text check (char_length(company) <= 120),
+  email text not null check (email ~* '^[^@\s]+@[^@\s]+\.[^@\s]+$'),
+  phone text not null check (char_length(phone) between 6 and 30),
+  topic text not null check (topic in ('objekat', 'dogadjaj', 'ostalo')),
+  message text not null check (char_length(message) between 10 and 2000),
+  done boolean not null default false,
+  created_at timestamptz not null default now()
+);
+
 -- updated_at
 create function public.touch_updated_at() returns trigger language plpgsql as $$
 begin new.updated_at = now(); return new; end $$;
@@ -121,6 +134,11 @@ create policy "variants: admin write" on public.product_variants for all using (
 -- No insert policy for anon: orders can only be created through place_order().
 create policy "orders: admin all" on public.orders for all using (public.is_admin()) with check (public.is_admin());
 create policy "order_items: admin all" on public.order_items for all using (public.is_admin()) with check (public.is_admin());
+
+alter table public.inquiries enable row level security;
+-- Anyone may submit (constraints above validate); only admins can read or update.
+create policy "inquiries: public insert" on public.inquiries for insert to anon, authenticated with check (done = false);
+create policy "inquiries: admin all" on public.inquiries for all using (public.is_admin()) with check (public.is_admin());
 
 create policy "admins: read own row" on public.admins for select using (user_id = auth.uid());
 

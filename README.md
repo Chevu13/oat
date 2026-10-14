@@ -30,6 +30,7 @@ Katalog se pravi automatski pri prvom pokretanju iz `src/lib/data/seed.ts`. Da s
 | Porudžbine | pretraga (broj, ime, telefon, e-mail, grad), filter po statusu i datumu, detalji, promena statusa (Nova, U obradi, Poslata, Isporučena, Otkazana) |
 | Proizvodi | dodavanje, izmena, brisanje (uz potvrdu), naziv, opis, cena, akcijska cena, upload i redosled slika, kategorija, varijante, uključi/isključi, istaknut, boja ukusa, sastav/alergeni/gramaža, oznake "nedostaje" |
 | Kategorije | dodavanje, izmena, brisanje (uz potvrdu), promena redosleda |
+| Upiti | poruke iz formulara za saradnju (stranica Kontakt): tema, kontakt, poruka, označavanje kao rešeno |
 
 Izmene su odmah vidljive u prodavnici: keš kataloga se poništava (`updateTag("catalog")`), bez ponovnog deploy-a.
 

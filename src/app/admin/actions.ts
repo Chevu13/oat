@@ -135,6 +135,18 @@ export async function uploadImages(form: FormData): Promise<{ ok: true; urls: st
   }
 }
 
+// ---------- inquiries ----------
+export async function setInquiryDone(id: string, done: boolean): Promise<ActionResult> {
+  await requireAdmin();
+  if (!z.uuid().safeParse(id).success) return fail("Neispravan upit.");
+  try {
+    await store.setInquiryDone(id, done);
+    return { ok: true, message: done ? "Upit je označen kao rešen." : "Upit je vraćen u nove." };
+  } catch (e) {
+    return fail(errMsg(e));
+  }
+}
+
 // ---------- categories ----------
 const categorySchema = z.object({
   id: z.uuid().optional(),

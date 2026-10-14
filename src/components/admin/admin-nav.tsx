@@ -7,6 +7,7 @@ const NAV = [
   { href: "/admin", label: "Pregled", icon: "M4 13h6V4H4v9Zm10 7h6V4h-6v16ZM4 20h6v-4H4v4Z" },
   { href: "/admin/porudzbine", label: "Porudžbine", icon: "M6 4h12l1 16H5L6 4Zm3 4h6m-6 4h6" },
   { href: "/admin/proizvodi", label: "Proizvodi", icon: "M7 7h10l-1 13H8L7 7Zm2 0V5a3 3 0 0 1 6 0v2" },
+  { href: "/admin/upiti", label: "Upiti", icon: "M4 6h16v12H4zM4 7l8 6 8-6" },
   { href: "/admin/kategorije", label: "Kategorije", icon: "M4 6h16M4 12h16M4 18h10" },
 ];
 
@@ -39,7 +40,7 @@ export function SideNav() {
 export function BottomNav() {
   const path = usePathname();
   return (
-    <nav aria-label="Admin navigacija" className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 border-t border-line bg-white pb-[env(safe-area-inset-bottom)] md:hidden">
+    <nav aria-label="Admin navigacija" className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t border-line bg-white pb-[env(safe-area-inset-bottom)] md:hidden">
       {NAV.map((n) => (
         <Link key={n.href} href={n.href} aria-current={active(path, n.href) ? "page" : undefined} className={`flex flex-col items-center gap-1 py-2.5 text-[0.7rem] font-semibold ${active(path, n.href) ? "text-ink" : "text-ink/50"}`}>
           <Icon d={n.icon} /> {n.label}

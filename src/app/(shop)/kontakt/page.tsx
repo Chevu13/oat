@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { PageShell, Placeholder } from "@/components/site/page-shell";
 import { InstagramIcon, PhoneIcon } from "@/components/ui/icons";
 import { site } from "@/lib/config";
+import { InquiryForm } from "@/components/site/inquiry-form";
 
 export const metadata: Metadata = {
   title: "Kontakt i saradnja",
@@ -35,28 +36,37 @@ export default function ContactPage() {
         </a>
       </div>
 
-      <section id="saradnja" className="mt-20 scroll-mt-28 rounded-[2rem] bg-paper-2 p-8 md:p-14">
+      <section id="saradnja" className="mt-20 scroll-mt-28 rounded-[2rem] bg-paper-2 p-6 sm:p-8 md:p-14">
         <p className="eyebrow text-ink-soft">B2B · Događaji</p>
         <h2 className="display mt-3 text-4xl sm:text-5xl md:text-7xl">Saradnja</h2>
-        <div className="mt-8 grid gap-10 md:grid-cols-2">
-          <div>
-            <h3 className="text-xl font-extrabold uppercase [font-stretch:118%]">Kaše u vašem objektu</h3>
-            <p className="mt-2 text-ink-soft">
-              Ukoliko želite OAT BOMB kaše u vašem objektu, javite nam se za saradnju. Kafići, teretane, prodavnice zdrave hrane: obogatite ponudu proizvodom koji se zaista traži.
-            </p>
+        <div className="mt-10 grid gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:gap-14">
+          <div className="space-y-8">
+            <div>
+              <h3 className="text-xl font-extrabold uppercase [font-stretch:118%]">Kaše u vašem objektu</h3>
+              <p className="mt-2 text-ink-soft">
+                Ukoliko želite OAT BOMB kaše u vašem objektu, javite nam se za saradnju. Kafići, teretane, prodavnice zdrave hrane: obogatite ponudu proizvodom koji se zaista traži.
+              </p>
+            </div>
+            <div>
+              <h3 className="text-xl font-extrabold uppercase [font-stretch:118%]">Mini kaše za događaje</h3>
+              <p className="mt-2 text-ink-soft">Rođendani, proslave, poslovni sastanci i ketering. Recite nam broj gostiju i ukuse, a mi pripremamo ponudu.</p>
+            </div>
+            <div className="border-t border-ink/10 pt-6">
+              <p className="text-sm font-semibold">Više voliš direktno?</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <a href={site.phoneHref} className="btn btn-line !min-h-11 text-sm">
+                  <PhoneIcon /> {site.phone}
+                </a>
+                <a href={igDm} target="_blank" rel="noreferrer" className="btn btn-line !min-h-11 text-sm">
+                  <InstagramIcon /> Instagram
+                </a>
+              </div>
+            </div>
           </div>
-          <div>
-            <h3 className="text-xl font-extrabold uppercase [font-stretch:118%]">Mini kaše za događaje</h3>
-            <p className="mt-2 text-ink-soft">Rođendani, proslave, poslovni sastanci i ketering. Recite nam broj gostiju i ukuse, a mi pripremamo ponudu.</p>
+          <div className="rounded-[1.5rem] bg-white/70 p-5 ring-1 ring-line sm:p-8">
+            <p className="display mb-6 text-2xl">Pošalji upit</p>
+            <InquiryForm />
           </div>
-        </div>
-        <div className="mt-10 flex flex-wrap gap-3">
-          <a href={site.phoneHref} className="btn btn-ink">
-            <PhoneIcon /> Pozovi za ponudu
-          </a>
-          <a href={igDm} target="_blank" rel="noreferrer" className="btn btn-line">
-            <InstagramIcon /> Pošalji poruku
-          </a>
         </div>
       </section>
 

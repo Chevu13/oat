@@ -1,6 +1,7 @@
 import "server-only";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
+import { connection } from "next/server";
 import { redirect } from "next/navigation";
 import { io } from "next/cache";
 
@@ -51,7 +52,12 @@ export async function destroySession() {
 }
 
 export async function getAdmin(): Promise<{ email: string } | null> {
-  if (adminOpen()) return { email: "demo" };
+  if (adminOpen()) {
+    // No cookie read in open mode, so mark the request as dynamic explicitly —
+    // otherwise admin pages would be prerendered at build time with stale data.
+    await connection();
+    return { email: "demo" };
+  }
   const raw = (await cookies()).get(SESSION_COOKIE)?.value;
   if (!raw || !adminConfigured()) return null;
   await io(); // expiry check reads the clock — keep it out of prerendering

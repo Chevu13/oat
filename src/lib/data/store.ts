@@ -7,6 +7,8 @@ import type {
   OrderStatus,
   Product,
   ProductInput,
+  Inquiry,
+  InquiryInput,
 } from "@/lib/types";
 
 /** Every backend (Supabase, local demo) implements this contract. */
@@ -31,4 +33,10 @@ export interface Store {
   reorderCategories(ids: string[]): Promise<void>;
   uploadImage(file: File): Promise<string>;
   dashboard(): Promise<DashboardStats>;
+
+  /** Public: the Saradnja contact form. */
+  saveInquiry(input: InquiryInput): Promise<void>;
+  // admin
+  listInquiries(): Promise<Inquiry[]>;
+  setInquiryDone(id: string, done: boolean): Promise<void>;
 }

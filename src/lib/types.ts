@@ -95,6 +95,24 @@ export type CheckoutInput = {
   items: { variant_id: string; quantity: number }[];
 };
 
+export const INQUIRY_TOPICS = ["objekat", "dogadjaj", "ostalo"] as const;
+export type InquiryTopic = (typeof INQUIRY_TOPICS)[number];
+export const TOPIC_LABEL: Record<InquiryTopic, string> = { objekat: "Saradnja za objekat", dogadjaj: "Mini kaše za događaj", ostalo: "Ostalo" };
+
+/** Contact / partnership request from the Saradnja form. */
+export type Inquiry = {
+  id: string;
+  name: string;
+  company: string | null;
+  email: string;
+  phone: string;
+  topic: InquiryTopic;
+  message: string;
+  created_at: string;
+  done: boolean;
+};
+export type InquiryInput = Omit<Inquiry, "id" | "created_at" | "done">;
+
 export type ProductInput = {
   id?: string;
   slug: string;
@@ -120,6 +138,7 @@ export type DashboardStats = {
   totalOrders: number;
   newOrders: number;
   totalValue: number; // excludes cancelled
+  newInquiries: number;
   recentOrders: Order[];
   bestsellers: { product_name: string; quantity: number; revenue: number }[];
 };

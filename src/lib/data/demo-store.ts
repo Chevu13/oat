@@ -6,7 +6,7 @@ import { seedCategories, seedProducts, DEMO_MISSING } from "./seed";
 import { bestsellersFrom, computeDashboard, matchesFilter } from "./shared";
 import { effectivePrice } from "@/lib/format";
 import { shippingFor } from "@/lib/config";
-import { OrderError, type Category, type Order, type Product } from "@/lib/types";
+import { OrderError, type Category, type Inquiry, type Order, type Product } from "@/lib/types";
 import type { Store } from "./store";
 import { redis, redisEnabled } from "./redis";
 
@@ -19,9 +19,10 @@ const FILE = path.join(DIR, "demo-db.json");
 export const UPLOAD_DIR = path.join(DIR, "uploads");
 const K_CATALOG = "oatbomb:catalog";
 const K_ORDERS = "oatbomb:orders";
+const K_INQUIRIES = "oatbomb:inquiries";
 export const imageKey = (name: string) => `oatbomb:img:${name}`;
 
-type DB = { categories: Category[]; products: Product[]; orders: Order[] };
+type DB = { categories: Category[]; products: Product[]; orders: Order[]; inquiries: Inquiry[] };
 
 /** Same key → same UUID on every server/instance, so carts keep working across restarts and deploys. */
 function stableId(key: string) {
@@ -63,7 +64,7 @@ function seed(): DB {
       })),
     };
   });
-  return { categories, products, orders: [] };
+  return { categories, products, orders: [], inquiries: [] };
 }
 
 // File mode keeps one in-memory copy per process (on globalThis so every route bundle shares it).
@@ -73,17 +74,26 @@ const state = (g.__oatbomb ??= { db: null, queue: Promise.resolve() });
 async function load(): Promise<DB> {
   if (redisEnabled) {
     // Always fresh: other instances may have written since.
-    const [catalog, orders] = await Promise.all([redis<string | null>("GET", K_CATALOG), redis<string[]>("HVALS", K_ORDERS)]);
+    const [catalog, orders, inquiries] = await Promise.all([
+      redis<string | null>("GET", K_CATALOG),
+      redis<string[]>("HVALS", K_ORDERS),
+      redis<string[]>("HVALS", K_INQUIRIES),
+    ]);
     if (!catalog) {
       const db = seed();
       await redis("SET", K_CATALOG, JSON.stringify({ categories: db.categories, products: db.products }), "NX");
       return load();
     }
-    return { ...(JSON.parse(catalog) as Omit<DB, "orders">), orders: orders.map((o) => JSON.parse(o) as Order) };
+    return {
+      ...(JSON.parse(catalog) as Pick<DB, "categories" | "products">),
+      orders: orders.map((o) => JSON.parse(o) as Order),
+      inquiries: inquiries.map((i) => JSON.parse(i) as Inquiry),
+    };
   }
   if (state.db) return state.db;
   try {
     state.db = JSON.parse(await fs.readFile(FILE, "utf8")) as DB;
+    state.db.inquiries ??= []; // files created before the contact form existed
   } catch {
     state.db = seed();
     await persist(state.db);
@@ -96,6 +106,7 @@ async function persist(db: DB) {
     // ponytail: last-writer-wins on the catalog (fine for one admin); orders are per-field so new orders never collide.
     await redis("SET", K_CATALOG, JSON.stringify({ categories: db.categories, products: db.products }));
     if (db.orders.length) await redis("HSET", K_ORDERS, ...db.orders.flatMap((o) => [o.id, JSON.stringify(o)]));
+    if (db.inquiries.length) await redis("HSET", K_INQUIRIES, ...db.inquiries.flatMap((i) => [i.id, JSON.stringify(i)]));
     return;
   }
   await fs.mkdir(DIR, { recursive: true });
@@ -296,6 +307,24 @@ export const demoStore: Store = {
 
   async dashboard() {
     const db = await load();
-    return computeDashboard(clone(db.orders));
+    return computeDashboard(clone(db.orders), clone(db.inquiries));
+  },
+
+  saveInquiry(input) {
+    return write((db) => {
+      db.inquiries.push({ ...input, id: randomUUID(), created_at: new Date().toISOString(), done: false });
+    });
+  },
+
+  async listInquiries() {
+    return clone((await load()).inquiries).sort((a, b) => b.created_at.localeCompare(a.created_at));
+  },
+
+  setInquiryDone(id, done) {
+    return write((db) => {
+      const i = db.inquiries.find((x) => x.id === id);
+      if (!i) throw new Error("Upit nije pronađen.");
+      i.done = done;
+    });
   },
 };

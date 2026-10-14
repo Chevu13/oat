@@ -1,7 +1,7 @@
-import type { DashboardStats, Order, OrderFilter } from "@/lib/types";
+import type { DashboardStats, Inquiry, Order, OrderFilter } from "@/lib/types";
 
 // ponytail: aggregates in JS over all orders; move to SQL views once order volume is in the tens of thousands.
-export function computeDashboard(orders: Order[]): DashboardStats {
+export function computeDashboard(orders: Order[], inquiries: Inquiry[]): DashboardStats {
   const live = orders.filter((o) => o.status !== "otkazana");
   const sales = new Map<string, { product_name: string; quantity: number; revenue: number }>();
   for (const o of live)
@@ -16,6 +16,7 @@ export function computeDashboard(orders: Order[]): DashboardStats {
     totalOrders: orders.length,
     newOrders: orders.filter((o) => o.status === "nova").length,
     totalValue: live.reduce((s, o) => s + o.total, 0),
+    newInquiries: inquiries.filter((i) => !i.done).length,
     recentOrders: [...orders].sort((a, b) => b.created_at.localeCompare(a.created_at)).slice(0, 6),
     bestsellers: [...sales.values()].sort((a, b) => b.quantity - a.quantity).slice(0, 5),
   };

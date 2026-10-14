@@ -22,10 +22,11 @@ export default async function Dashboard() {
         </Link>
       </div>
 
-      <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-4">
+      <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
         <Kpi label="Ukupno porudžbina" value={String(s.totalOrders)} />
         <Kpi label="Nove porudžbine" value={String(s.newOrders)} highlight={s.newOrders > 0} href="/admin/porudzbine?status=nova" />
         <Kpi label="Vrednost porudžbina" value={formatRSD(s.totalValue)} hint="bez otkazanih" />
+        <Kpi label="Novi upiti" value={String(s.newInquiries)} highlight={s.newInquiries > 0} href="/admin/upiti" />
         <Kpi label="Aktivni proizvodi" value={`${products.filter((p) => p.is_active).length} / ${products.length}`} href="/admin/proizvodi" />
       </div>
 
