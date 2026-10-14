@@ -30,10 +30,14 @@ async function Gate({ children }: { children: React.ReactNode }) {
           <Link href="/" target="_blank" className="block font-semibold text-ink/70 hover:text-ink">
             ↗ Otvori prodavnicu
           </Link>
-          <p className="truncate text-xs text-ink-soft">{admin.email}</p>
-          <form action={logout}>
-            <button className="font-semibold text-berry hover:underline">Odjavi se</button>
-          </form>
+          {admin.email !== "demo" && (
+            <>
+              <p className="truncate text-xs text-ink-soft">{admin.email}</p>
+              <form action={logout}>
+                <button className="font-semibold text-berry hover:underline">Odjavi se</button>
+              </form>
+            </>
+          )}
         </div>
       </aside>
 
@@ -43,9 +47,11 @@ async function Gate({ children }: { children: React.ReactNode }) {
           <Link href="/" target="_blank">
             Prodavnica ↗
           </Link>
-          <form action={logout}>
-            <button className="text-berry">Odjava</button>
-          </form>
+          {admin.email !== "demo" && (
+            <form action={logout}>
+              <button className="text-berry">Odjava</button>
+            </form>
+          )}
         </div>
       </header>
 

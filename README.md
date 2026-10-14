@@ -18,8 +18,8 @@ Katalog se pravi automatski pri prvom pokretanju iz `src/lib/data/seed.ts`. Da s
 
 ## Admin panel
 
-- Adresa: `/admin` (prijava na `/admin/prijava`)
-- Pristupni podaci: `ADMIN_EMAIL` i `ADMIN_PASSWORD` iz `.env.local` (lokalni test nalog)
+- Adresa: `/admin`, **u demo verziji bez lozinke**
+- Za uključivanje prijave: `ADMIN_REQUIRE_LOGIN=true`, a pristupni podaci su `ADMIN_EMAIL` i `ADMIN_PASSWORD` (prijava na `/admin/prijava`)
 - Sesija: potpisan (HMAC) httpOnly kolačić, 12 sati. Svaka admin stranica i svaka server akcija ponovo proverava sesiju.
 
 Šta admin može:

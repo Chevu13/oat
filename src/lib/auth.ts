@@ -21,6 +21,9 @@ const safeEqual = (a: string, b: string) => {
   return x.length === y.length && timingSafeEqual(x, y);
 };
 
+/** Demo: admin is open without a password unless ADMIN_REQUIRE_LOGIN=true. */
+export const adminOpen = () => process.env.ADMIN_REQUIRE_LOGIN !== "true";
+
 export const adminConfigured = () =>
   Boolean(process.env.ADMIN_EMAIL && process.env.ADMIN_PASSWORD && (process.env.SESSION_SECRET?.length ?? 0) >= 32);
 
@@ -48,6 +51,7 @@ export async function destroySession() {
 }
 
 export async function getAdmin(): Promise<{ email: string } | null> {
+  if (adminOpen()) return { email: "demo" };
   const raw = (await cookies()).get(SESSION_COOKIE)?.value;
   if (!raw || !adminConfigured()) return null;
   await io(); // expiry check reads the clock — keep it out of prerendering

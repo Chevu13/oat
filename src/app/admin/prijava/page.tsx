@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import { LoginForm } from "@/components/admin/login-form";
 import { Logo } from "@/components/site/logo";
-import { adminConfigured } from "@/lib/auth";
+import { redirect } from "next/navigation";
+import { adminConfigured, adminOpen } from "@/lib/auth";
 
 export const metadata: Metadata = { title: "Prijava" };
 
 export default function LoginPage() {
+  if (adminOpen()) redirect("/admin");
   return (
     <main className="grid min-h-dvh place-items-center px-4">
       <div className="w-full max-w-sm">
