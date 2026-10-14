@@ -96,7 +96,8 @@ async function load(): Promise<DB> {
     state.db.inquiries ??= []; // files created before the contact form existed
   } catch {
     state.db = seed();
-    await persist(state.db);
+    // Best effort: a read must never fail just because the first save couldn't be written.
+    await persist(state.db).catch((e) => console.warn("demo store: initial save failed", e));
   }
   return state.db;
 }
@@ -110,9 +111,15 @@ async function persist(db: DB) {
     return;
   }
   await fs.mkdir(DIR, { recursive: true });
-  const tmp = `${FILE}.tmp`;
+  // Unique temp name: parallel build workers / processes may seed at the same moment.
+  const tmp = `${FILE}.${process.pid}.${randomUUID()}.tmp`;
   await fs.writeFile(tmp, JSON.stringify(db, null, 2));
-  await fs.rename(tmp, FILE); // atomic replace: a crash mid-write can't corrupt the DB
+  try {
+    await fs.rename(tmp, FILE); // atomic replace: a crash mid-write can't corrupt the DB
+  } catch (e) {
+    await fs.rm(tmp, { force: true });
+    throw e;
+  }
 }
 
 // Serialize writes within a process.
